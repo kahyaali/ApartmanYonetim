@@ -1,0 +1,150 @@
+﻿
+
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Mesajlar";
+}
+
+<div class="page-header">
+    <h4>
+        <i class="fas fa-comments me-2"></i>Mesajlar
+        @if ((int)ViewBag.ToplamOkunmamis > 0)
+        {
+            <span class="badge bg-danger ms-2" style="font-size:12px;">
+                @ViewBag.ToplamOkunmamis
+            </span>
+        }
+    </h4>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="table-card" style="padding:0;overflow:hidden;">
+            <div style="padding:16px 20px;border-bottom:1px solid #f0f2f5;">
+                <h6 class="mb-0" style="font-weight:600;color:#1e3a5f;">
+                    Konuşmalar
+                </h6>
+            </div>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <div style="padding:12px 16px;border-bottom:1px solid #f0f2f5; background:#f8fafc;">
+                    <div style="font-size:11px;color:#718096; margin-bottom:8px;font-weight:600;">
+                        YENİ KONUŞMA BAŞLAT
+                    </div>
+                    <form asp-action="YeniKonusma" method="post" class="d-flex gap-2">
+                        <select name="aliciId" class="form-select form-select-sm">
+                            <option value="">Kullanıcı seç...</option>
+                            @if (ViewBag.Kullanicilar != null)
+                            {
+                                @foreach (AppUser u in ViewBag.Kullanicilar)
+                                {
+                                    <option value="@u.Id">
+                                        @u.Ad @u.Soyad
+                                        @(u.Apartment != null ? $"— Daire {u.Apartment.DaireNo}" : "")
+                                    </option>
+                                }
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-sm" style="background:#1e3a5f;color:#fff; border-radius:8px;white-space:nowrap;">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </form>
+                </div>
+            }
+
+            <div id="konusmalar">
+                @if (ViewBag.Konusmalar != null && ((dynamic)ViewBag.Konusmalar).Count > 0)
+                {
+                    @foreach (var k in ViewBag.Konusmalar)
+                    {
+                        var partner = k.Partner as AppUser;
+                        var sonMesaj = k.SonMesaj as Mesaj;
+                        var okunmamis = (int)k.OkunmamişSayi;
+
+                        <div class="konusma-satir-wrapper d-flex align-items-center justify-content-between"
+                             style="border-bottom:1px solid #f0f2f5; background:@(okunmamis > 0 ? "#f0f7ff" : "transparent"); transition:all 0.2s; padding-right:16px;">
+
+                            <a href="@Url.Action("Konusma", "Mesaj", new { partnerId = k.PartnerId })"
+                               style="display:flex;align-items:center;gap:12px; padding:14px 16px; text-decoration:none; flex:1; min-width:0;">
+
+                                <div style="width:40px;height:40px;border-radius:50%; background:#e8f4fd;display:flex; align-items:center;justify-content:center; font-weight:700;color:#2d6a9f; font-size:14px;flex-shrink:0;">
+                                    @(partner?.Ad?.FirstOrDefault().ToString() ?? "?")@(partner?.Soyad?.FirstOrDefault().ToString() ?? "")
+                                </div>
+
+                                <div style="flex:1;min-width:0; padding-right:8px;">
+                                    <div style="font-weight:600;font-size:13px;color:#2d3748;">
+                                        @partner?.Ad @partner?.Soyad
+                                    </div>
+                                    <div style="font-size:12px;color:#718096; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        @sonMesaj?.Icerik
+                                    </div>
+                                </div>
+
+                                @if (okunmamis > 0)
+                                {
+                                    <span class="badge bg-danger" style="font-size:11px;border-radius:50%; min-width:20px;height:20px; display:flex;align-items:center; justify-content:center; flex-shrink:0;">
+                                        @okunmamis
+                                    </span>
+                                }
+                            </a>
+
+                            <form asp-action="KonusmaSil" method="post" class="sil-btn-container" style="flex-shrink:0;">
+                                <input type="hidden" name="partnerId" value="@k.PartnerId" />
+                                <button type="submit" onclick="return confirm('@partner?.Ad @partner?.Soyad ile olan tüm konuşma geçmişini silmek istediğinize emin misiniz?')"
+                                        style="background:none; border:1px solid #f0f2f5; border-radius:8px; padding:6px 10px; color:#a0aec0; cursor:pointer; font-size:12px; transition: all 0.2s;"
+                                        title="Konuşmayı Sil">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted" style="font-size:13px;">
+                        <i class="fas fa-comments me-2"></i>Henüz mesaj yok.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="table-card" style="min-height:400px;display:flex; align-items:center;justify-content:center;">
+            <div class="text-center text-muted">
+                <i class="fas fa-comments" style="font-size:48px;opacity:0.2;"></i>
+                <p class="mt-3" style="font-size:14px;">
+                    Soldaki listeden bir konuşma seçin.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+  
+    .konusma-satir-wrapper:hover {
+        background: #f8fafc !important;
+    }
+
+  
+    .sil-btn-container button {
+        opacity: 0.3;
+    }
+
+
+    .konusma-satir-wrapper:hover .sil-btn-container button {
+        opacity: 1;
+        color: #718096;
+        border-color: #cbd5e1;
+    }
+
+
+    .sil-btn-container button:hover {
+        background: #e74c3c !important;
+        color: #fff !important;
+        border-color: #e74c3c !important;
+        transform: scale(1.05);
+    }
+</style>

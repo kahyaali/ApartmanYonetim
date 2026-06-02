@@ -1,0 +1,79 @@
+﻿@model ApartmanYonetim.Controllers.YoneticiDuzenleViewModel
+@{
+    ViewData["Title"] = "Yönetici Düzenle";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-user-edit me-2"></i>Yönetici Düzenle</h4>
+    <a asp-action="Yoneticiler" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card" style="max-width:600px;">
+    <form asp-action="YoneticiDuzenle" method="post">
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Ad</label>
+                <input name="Ad" value="@Model.Ad" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Soyad</label>
+                <input name="Soyad" value="@Model.Soyad" class="form-control" />
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">E-posta</label>
+                <input value="@Model.Email" class="form-control" disabled />
+                <div style="font-size:11px;color:#a0aec0;margin-top:4px;">
+                    E-posta değiştirilemez.
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    Yeni Şifre (Opsiyonel)
+                </label>
+                <input name="YeniSifre" type="password" class="form-control"
+                       placeholder="Değiştirmek istemiyorsanız boş bırakın" />
+            </div>
+
+            <!-- Blok Ataması -->
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    Atanacak Bloklar
+                </label>
+                <div style="background:#f8fafc;border-radius:10px;
+                    padding:14px;max-height:200px;overflow-y:auto;">
+                    @if (ViewBag.Bloklar != null)
+                    {
+                        @foreach (ApartmanYonetim.Models.Entities.Block b
+                            in ViewBag.Bloklar)
+                        {
+                            var secili = Model.SecilenBlokIds.Contains(b.Id);
+                            <div class="form-check mb-1">
+                                <input type="checkbox"
+                                       name="SecilenBlokIds"
+                                       value="@b.Id"
+                                       class="form-check-input"
+                                       id="blok_@b.Id"
+                                @(secili ? "checked" : "") />
+                                <label class="form-check-label"
+                                       for="blok_@b.Id"
+                                       style="font-size:13px;">
+                                    @b.Ad
+                                </label>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-save me-2"></i>Güncelle
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

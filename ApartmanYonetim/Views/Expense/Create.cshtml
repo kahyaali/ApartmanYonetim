@@ -1,0 +1,74 @@
+﻿@model ApartmanYonetim.Models.ViewModels.ExpenseViewModel
+@{
+    ViewData["Title"] = "Yeni Gider";
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-plus me-2"></i>Yeni Gider Ekle</h4>
+  
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card">
+    <form asp-action="Create" method="post">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Firma Adı</label>
+                <input asp-for="FirmaAdi" class="form-control" placeholder="Örn: ABC Teknik Servis" />
+                <span asp-validation-for="FirmaAdi" class="text-danger" style="font-size:12px;"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Çalışma Türü</label>
+                <select asp-for="CalismaTuru" class="form-select">
+                    <option value="">Seçiniz</option>
+                    <option value="Asansör Bakım">Asansör Bakım</option>
+                    <option value="Elektrik">Elektrik</option>
+                    <option value="Su / Tesisat">Su / Tesisat</option>
+                    <option value="Çatı Onarım">Çatı Onarım</option>
+                    <option value="Boya / Badana">Boya / Badana</option>
+                    <option value="Temizlik">Temizlik</option>
+                    <option value="Bahçe Bakım">Bahçe Bakım</option>
+                    <option value="Güvenlik">Güvenlik</option>
+                    <option value="Diğer">Diğer</option>
+                </select>
+                <span asp-validation-for="CalismaTuru" class="text-danger" style="font-size:12px;"></span>
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Açıklama</label>
+                <textarea asp-for="Aciklama" class="form-control" rows="3"
+                          placeholder="Yapılan iş hakkında detay..."></textarea>
+                <span asp-validation-for="Aciklama" class="text-danger" style="font-size:12px;"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Tutar (₺)</label>
+                <input asp-for="Tutar" class="form-control" type="number" step="0.01" placeholder="0.00" />
+                <span asp-validation-for="Tutar" class="text-danger" style="font-size:12px;"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Gider Tarihi</label>
+                <input asp-for="GiderTarihi" class="form-control" type="date" />
+                <span asp-validation-for="GiderTarihi" class="text-danger" style="font-size:12px;"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Fatura No (opsiyonel)</label>
+                <input asp-for="FaturaNo" class="form-control" placeholder="Örn: F-2024-001" />
+            </div>
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth" style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-save me-2"></i>Kaydet
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

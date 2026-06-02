@@ -1,0 +1,63 @@
+﻿@model ApartmanYonetim.Models.Entities.Kargo
+@{
+    ViewData["Title"] = "Kargo Ekle";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-plus me-2"></i>Kargo Ekle</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card">
+    <form asp-action="Create" method="post">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Alıcı Ad Soyad *</label>
+                <input asp-for="AliciAd" class="form-control" placeholder="Ad Soyad" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Daire</label>
+                <select asp-for="ApartmentId" class="form-select">
+                    <option value="">Daire Seçiniz</option>
+                    @foreach (Microsoft.AspNetCore.Mvc.Rendering.SelectListItem item
+                        in ViewBag.Daireler)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Kargo Firması</label>
+                <select asp-for="KargoFirma" class="form-select">
+                    <option value="">Seçiniz</option>
+                    <option value="Yurtiçi Kargo">Yurtiçi Kargo</option>
+                    <option value="Aras Kargo">Aras Kargo</option>
+                    <option value="MNG Kargo">MNG Kargo</option>
+                    <option value="PTT Kargo">PTT Kargo</option>
+                    <option value="Sürat Kargo">Sürat Kargo</option>
+                    <option value="UPS">UPS</option>
+                    <option value="DHL">DHL</option>
+                    <option value="Diğer">Diğer</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Takip No</label>
+                <input asp-for="TakipNo" class="form-control"
+                       placeholder="Kargo takip numarası" />
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Açıklama</label>
+                <input asp-for="Aciklama" class="form-control"
+                       placeholder="Opsiyonel not..." />
+            </div>
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-save me-2"></i>Kaydet
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

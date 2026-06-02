@@ -1,0 +1,184 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Anket>
+@{
+    ViewData["Title"] = "Anketler";
+}
+@{
+    var oyVerilenler = ViewBag.OyVerilenAnketler as List<int> ?? new List<int>();
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-poll me-2"></i>Anketler & Oylamalar</h4>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-sm"
+               style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-plus me-1"></i>Yeni Anket
+        </a>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@foreach (var anket in Model)
+{
+    var toplamOy = anket.Oylar.Count;
+    var oyVerildi = oyVerilenler.Contains(anket.Id);
+    var aktif = anket.AktifMi && anket.BitisTarihi >= DateTime.Now;
+
+    <div class="table-card mb-4">
+        <div class="d-flex align-items-start justify-content-between mb-3">
+            <div>
+                <h6 style="font-weight:600;color:#1e3a5f;margin-bottom:4px;">
+                    @anket.Baslik
+                </h6>
+                @if (!string.IsNullOrEmpty(anket.Aciklama))
+                {
+                    <p style="font-size:13px;color:#718096;margin-bottom:4px;">
+                        @anket.Aciklama
+                    </p>
+                }
+                <span style="font-size:11px;color:#a0aec0;">
+                    <i class="fas fa-clock me-1"></i>
+                    Bitiş: @anket.BitisTarihi.ToString("dd.MM.yyyy HH:mm")
+                    · @toplamOy oy kullanıldı
+                </span>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                @if (aktif)
+                {
+                    <span class="badge bg-success" style="font-size:11px;">
+                        Aktif
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary" style="font-size:11px;">
+                        Kapandı
+                    </span>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <form asp-action="ToggleAktif" asp-route-id="@anket.Id"
+                          method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                style="font-size:11px;">
+                            <i class="fas @(aktif ? "fa-eye-slash" : "fa-eye")"></i>
+                        </button>
+                    </form>
+                    <button type="button"
+                            onclick="anketSil(@anket.Id, '@anket.Baslik')"
+                            class="btn btn-sm btn-outline-danger"
+                            style="font-size:11px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <form id="anketSilForm_@anket.Id"
+                          asp-action="Delete" asp-route-id="@anket.Id"
+                          method="post" style="display:none;"></form>
+                }
+            </div>
+        </div>
+
+        <!-- Seçenekler -->
+        @if (!oyVerildi && aktif && !User.IsInRole("Admin"))
+        {
+            <!-- Oy verme formu -->
+            <form asp-action="OyVer" method="post">
+                <input type="hidden" name="anketId" value="@anket.Id" />
+                <div class="d-flex flex-column gap-2 mb-3">
+                    @foreach (var sik in anket.Siklar.OrderBy(s => s.SiraNo))
+                    {
+                        <label style="cursor:pointer;background:#f8fafc;
+                            border:2px solid #e2e8f0;border-radius:10px;
+                            padding:12px 16px;display:flex;
+                            align-items:center;gap:10px;
+                            transition:border-color 0.2s;"
+                               onmouseover="this.style.borderColor='#2d6a9f'"
+                               onmouseout="this.style.borderColor='#e2e8f0'">
+                            <input type="radio" name="sikId"
+                                   value="@sik.Id" required
+                                   style="accent-color:#1e3a5f;" />
+                            <span style="font-size:13px;">@sik.Metin</span>
+                            <span style="margin-left:auto;font-size:11px;
+                                color:#a0aec0;">
+                                @sik.Oylar.Count oy
+                            </span>
+                        </label>
+                    }
+                </div>
+                <button type="submit" class="btn btn-sm"
+                        style="background:#1e3a5f;color:#fff;border-radius:8px;">
+                    <i class="fas fa-vote-yea me-1"></i>Oyumu Kullan
+                </button>
+            </form>
+        }
+        else
+        {
+            <!-- Sonuçlar -->
+            @foreach (var sik in anket.Siklar.OrderBy(s => s.SiraNo))
+            {
+                var sikOy = sik.Oylar.Count;
+                var oran = toplamOy > 0
+                    ? (int)((double)sikOy / toplamOy * 100) : 0;
+
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1"
+                         style="font-size:13px;">
+                        <span>@sik.Metin</span>
+                        <span style="color:#718096;">
+                            @sikOy oy (%@oran)
+                        </span>
+                    </div>
+                    <div style="background:#e2e8f0;border-radius:20px;height:8px;">
+                        <div style="width:@oran%;background:#1e3a5f;
+                            border-radius:20px;height:8px;
+                            transition:width 0.5s;">
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (oyVerildi)
+            {
+                <div class="mt-2" style="font-size:12px;color:#27ae60;">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Oyunuzu kullandınız.
+                </div>
+            }
+        }
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="table-card text-center py-5">
+        <i class="fas fa-poll text-muted"
+           style="font-size:48px;opacity:0.3;"></i>
+        <p class="text-muted mt-3">Henüz anket oluşturulmamış.</p>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function anketSil(id, baslik) {
+            showConfirm(`"${baslik}" anketini silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (onay) document.getElementById(`anketSilForm_${id}`).submit();
+                });
+        }
+    </script>
+}

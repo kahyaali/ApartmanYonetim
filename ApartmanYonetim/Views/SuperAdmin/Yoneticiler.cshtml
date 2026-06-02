@@ -1,0 +1,140 @@
+﻿@model List<ApartmanYonetim.Controllers.YoneticiListViewModel>
+@{
+    ViewData["Title"] = "Yönetici Yönetimi";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-user-shield me-2"></i>Yönetici Yönetimi</h4>
+    <a asp-action="YoneticiEkle"
+           class="btn btn-sm"
+           style="background:#1e3a5f;color:#fff;border-radius:8px;">
+        <i class="fas fa-plus me-1"></i>Yönetici Ekle
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblYoneticiler"
+               class="table table-hover align-middle"
+               style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>E-posta</th>
+                    <th>Roller</th>
+                    <th>Atandığı Bloklar</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var y in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:36px;height:36px;border-radius:50%;
+                                    background:#e8f4fd;display:flex;
+                                    align-items:center;justify-content:center;
+                                    font-weight:700;color:#2d6a9f;flex-shrink:0;">
+                                    @(y.Ad.FirstOrDefault())@(y.Soyad.FirstOrDefault())
+                                </div>
+                                <strong>@y.Ad @y.Soyad</strong>
+                            </div>
+                        </td>
+                        <td style="color:#718096;">@y.Email</td>
+                        <td>
+                            @foreach (var rol in y.Roller)
+                            {
+                                <span class="badge me-1 @(rol == "SuperAdmin"
+                                                                                                              ? "bg-danger"
+                                                                                                              : "bg-primary")"
+                                      style="font-size:11px;">
+                                    @rol
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @if (y.AtandigiBloklar.Any())
+                            {
+                                @foreach (var blok in y.AtandigiBloklar)
+                                {
+                                    <span class="badge me-1"
+                                          style="background:#e8f4fd;
+                                        color:#2d6a9f;font-size:11px;">
+                                        @blok
+                                    </span>
+                                }
+                            }
+                            else
+                            {
+                                <span style="color:#a0aec0;font-size:12px;">
+                                    Tüm bloklar
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="YoneticiDuzenle"
+                                   asp-route-id="@y.Id"
+                                   class="btn btn-sm btn-outline-primary"
+                                   style="font-size:11px;">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            @if (!y.Roller.Contains("SuperAdmin"))
+                            {
+                                <button type="button"
+                                        onclick="yoneticiSil('@y.Id', '@y.Ad @y.Soyad')"
+                                        class="btn btn-sm btn-outline-danger"
+                                        style="font-size:11px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <form id="yoneticiSilForm_@y.Id"
+                                      asp-action="YoneticiSil"
+                                      asp-route-id="@y.Id"
+                                      method="post"
+                                      style="display:none;"></form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function yoneticiSil(id, adSoyad) {
+            showConfirm(`"${adSoyad}" yöneticisini silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (onay)
+                        document.getElementById(`yoneticiSilForm_${id}`).submit();
+                });
+        }
+
+        $(document).ready(function() {
+            $('#tblYoneticiler').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                pageLength: 15
+            });
+        });
+    </script>
+}

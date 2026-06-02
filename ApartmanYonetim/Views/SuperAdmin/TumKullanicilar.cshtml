@@ -1,0 +1,161 @@
+﻿@model List<ApartmanYonetim.Models.ViewModels.KullaniciDetayViewModel>
+@{
+    ViewData["Title"] = "Tüm Kullanıcılar";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-users me-2"></i>Tüm Kullanıcılar</h4>
+    <a asp-action="Yoneticiler" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-user-shield me-1"></i>Yöneticiler
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblKullanicilar"
+               class="table table-hover align-middle"
+               style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>E-posta</th>
+                    <th>Roller</th>
+                    <th>Daire</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var k in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:32px;height:32px;border-radius:50%;
+                                    background:#e8f4fd;display:flex;
+                                    align-items:center;justify-content:center;
+                                    font-weight:700;color:#2d6a9f;
+                                    font-size:12px;flex-shrink:0;">
+                                    @(k.Ad.FirstOrDefault())@(k.Soyad.FirstOrDefault())
+                                </div>
+                                <span style="font-weight:500;">
+                                    @k.Ad @k.Soyad
+                                </span>
+                            </div>
+                        </td>
+                        <td style="color:#718096;font-size:12px;">@k.Email</td>
+                        <td>
+                            @foreach (var rol in k.Roller)
+                            {
+                                string badgeClass = rol switch
+                                {
+                                    "SuperAdmin" => "bg-danger",
+                                    "Admin" => "bg-primary",
+                                    _ => "bg-success"
+                                };
+                                <span class="badge @badgeClass me-1"
+                                      style="font-size:10px;">
+                                    @rol
+                                </span>
+                            }
+                        </td>
+                        <td style="font-size:12px;">
+                            @if (!string.IsNullOrEmpty(k.DaireNo))
+                            {
+                                <span>@k.BlokAd — Daire @k.DaireNo</span>
+                            }
+                            else
+                            {
+                                <span style="color:#a0aec0;">—</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!k.Roller.Contains("SuperAdmin"))
+                            {
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary
+                                        dropdown-toggle"
+                                            style="font-size:11px;"
+                                            data-bs-toggle="dropdown">
+                                        Rol
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        @if (!k.Roller.Contains("Admin"))
+                                        {
+                                            <li>
+                                                <form asp-action="RolDegistir"
+                                                      method="post">
+                                                    <input type="hidden"
+                                                           name="userId"
+                                                           value="@k.Id" />
+                                                    <input type="hidden"
+                                                           name="rol"
+                                                           value="Admin" />
+                                                    <input type="hidden"
+                                                           name="ekle"
+                                                           value="true" />
+                                                    <button type="submit"
+                                                            class="dropdown-item"
+                                                            style="font-size:12px;">
+                                                        <i class="fas fa-plus me-1
+                                                        text-success"></i>
+                                                        Admin Yap
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        }
+                                        else
+                                        {
+                                            <li>
+                                                <form asp-action="RolDegistir"
+                                                      method="post">
+                                                    <input type="hidden"
+                                                           name="userId"
+                                                           value="@k.Id" />
+                                                    <input type="hidden"
+                                                           name="rol"
+                                                           value="Admin" />
+                                                    <input type="hidden"
+                                                           name="ekle"
+                                                           value="false" />
+                                                    <button type="submit"
+                                                            class="dropdown-item"
+                                                            style="font-size:12px;">
+                                                        <i class="fas fa-minus me-1
+                                                        text-warning"></i>
+                                                        Admin Rolü Kaldır
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#tblKullanicilar').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                pageLength: 20
+            });
+        });
+    </script>
+}

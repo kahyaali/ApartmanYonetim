@@ -1,0 +1,225 @@
+﻿@model ApartmanYonetim.Controllers.SearchResultViewModel
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Arama Sonuçları";
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4>
+        <i class="fas fa-search me-2"></i>
+        "@ViewBag.Query" için @Model.ToplamSonuc sonuç
+    </h4>
+    <button onclick="window.print()"
+            class="btn btn-sm btn-outline-secondary no-print">
+        <i class="fas fa-print me-1"></i>Yazdır
+    </button>
+</div>
+
+@if (Model.ToplamSonuc == 0)
+{
+    <div class="table-card text-center py-5">
+        <i class="fas fa-search text-muted"
+           style="font-size:48px;opacity:0.3;"></i>
+        <p class="text-muted mt-3">
+            "@ViewBag.Query" için sonuç bulunamadı.
+        </p>
+    </div>
+}
+
+@if (Model.Sakinler.Any())
+{
+    <div class="table-card mb-3">
+        <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+            <i class="fas fa-users me-2"></i>Sakinler
+        </h6>
+        @foreach (var s in Model.Sakinler)
+        {
+            <a asp-controller="Admin" asp-action="ResidentEdit"
+                   asp-route-id="@s.Id"
+                   class="d-flex align-items-center gap-3 p-2 mb-1 text-decoration-none"
+                   style="border-radius:8px;transition:background 0.2s;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                <div style="width:36px;height:36px;border-radius:50%;
+                    background:#e8f4fd;display:flex;align-items:center;
+                    justify-content:center;font-weight:600;
+                    color:#2d6a9f;flex-shrink:0;">
+                    @s.Ad[0]@s.Soyad[0]
+                </div>
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:#2d3748;">
+                        @s.Ad @s.Soyad
+                    </div>
+                    <div style="font-size:11px;color:#718096;">
+                        @(s.Apartment?.Block?.Ad ?? "") Daire @s.Apartment?.DaireNo
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+}
+
+@if (Model.Daireler.Any())
+{
+    <div class="table-card mb-3">
+        <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+            <i class="fas fa-building me-2"></i>Daireler
+        </h6>
+        @foreach (var d in Model.Daireler)
+        {
+            <a asp-controller="Admin" asp-action="ApartmentEdit"
+                   asp-route-id="@d.Id"
+                   class="d-flex align-items-center gap-3 p-2 mb-1 text-decoration-none"
+                   style="border-radius:8px;transition:background 0.2s;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                <div style="width:36px;height:36px;border-radius:8px;
+                    background:#e8f4fd;display:flex;align-items:center;
+                    justify-content:center;font-size:13px;
+                    font-weight:700;color:#2d6a9f;flex-shrink:0;">
+                    @d.DaireNo
+                </div>
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:#2d3748;">
+                        Daire @d.DaireNo
+                    </div>
+                    <div style="font-size:11px;color:#718096;">
+                        @(d.Block?.Ad ?? "") · @d.Tipi · @d.MetreKare m²
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+}
+
+@if (Model.Odemeler.Any())
+{
+    <div class="table-card mb-3">
+        <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+            <i class="fas fa-money-bill-wave me-2"></i>Ödemeler
+        </h6>
+        @foreach (var p in Model.Odemeler)
+        {
+            <a asp-controller="Payment" asp-action="Detail"
+                   asp-route-id="@p.Id"
+                   class="d-flex align-items-center justify-content-between p-2 mb-1 text-decoration-none"
+                   style="border-radius:8px;transition:background 0.2s;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:#2d3748;">
+                        @p.Aciklama
+                    </div>
+                    <div style="font-size:11px;color:#718096;">
+                        @(p.Apartment?.Block?.Ad ?? "") Daire @p.Apartment?.DaireNo
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div style="font-size:13px;font-weight:700;
+                        color:@(p.Odendi ? "#27ae60" : "#e74c3c");">
+                        @p.Tutar.ToString("N2") ₺
+                    </div>
+                    <div style="font-size:11px;color:#718096;">
+                        @p.SonOdemeTarihi.ToString("dd.MM.yyyy")
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+}
+
+@if (Model.Talepler.Any())
+{
+    <div class="table-card mb-3">
+        <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+            <i class="fas fa-tools me-2"></i>Talepler
+        </h6>
+        @foreach (var t in Model.Talepler)
+        {
+            <a asp-controller="Ticket" asp-action="Detail"
+                   asp-route-id="@t.Id"
+                   class="d-flex align-items-center justify-content-between p-2 mb-1 text-decoration-none"
+                   style="border-radius:8px;transition:background 0.2s;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:#2d3748;">
+                        @t.Baslik
+                    </div>
+                    <div style="font-size:11px;color:#718096;">@t.Kategori</div>
+                </div>
+                <span class="badge @(t.Durum == TicketDurum.Tamamlandi
+                                                              ? "bg-success"
+                                                              : t.Durum == TicketDurum.Bekliyor
+                                                              ? "bg-warning text-dark"
+                                                              : "bg-info text-dark")"
+                      style="font-size:11px;">
+                    @t.Durum
+                </span>
+            </a>
+        }
+    </div>
+}
+
+@if (Model.Duyurular.Any())
+{
+    <div class="table-card mb-3">
+        <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+            <i class="fas fa-bullhorn me-2"></i>Duyurular
+        </h6>
+        @foreach (var d in Model.Duyurular)
+        {
+            <a asp-controller="Announcement" asp-action="Index"
+                   class="d-block p-2 mb-1 text-decoration-none"
+                   style="border-radius:8px;transition:background 0.2s;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                <div style="font-size:13px;font-weight:600;color:#2d3748;">
+                    @d.Baslik
+                </div>
+                <div style="font-size:11px;color:#718096;">
+                    @d.YayinTarihi.ToString("dd.MM.yyyy")
+                </div>
+            </a>
+        }
+    </div>
+}
+
+@if (Model.Araclar.Any())
+{
+    <div class="table-card mb-3">
+        <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+            <i class="fas fa-car me-2"></i>Araçlar
+        </h6>
+        @foreach (var v in Model.Araclar)
+        {
+            <a asp-controller="Vehicle" asp-action="Index"
+                   class="d-flex align-items-center gap-3 p-2 mb-1 text-decoration-none"
+                   style="border-radius:8px;transition:background 0.2s;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                <div style="font-size:14px;font-weight:700;color:#1e3a5f;
+                    letter-spacing:2px;min-width:90px;">
+                    @v.Plaka
+                </div>
+                <div>
+                    <div style="font-size:13px;color:#2d3748;">
+                        @v.Marka @v.Model
+                    </div>
+                    <div style="font-size:11px;color:#718096;">
+                        @(v.Apartment?.Block?.Ad ?? "") Daire @v.Apartment?.DaireNo
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+}

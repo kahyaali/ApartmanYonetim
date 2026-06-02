@@ -1,0 +1,123 @@
+﻿@model List<ApartmanYonetim.Models.Entities.ButcePlan>
+@{
+    ViewData["Title"] = "Bütçe Planlaması";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-chart-pie me-2"></i>Bütçe Planlaması</h4>
+    <a asp-action="Create" class="btn btn-sm"
+           style="background:#1e3a5f;color:#fff;border-radius:8px;">
+        <i class="fas fa-plus me-1"></i>Yeni Plan
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="table-card text-center py-5">
+        <i class="fas fa-chart-pie text-muted"
+           style="font-size:48px;opacity:0.3;"></i>
+        <p class="text-muted mt-3">Henüz bütçe planı oluşturulmamış.</p>
+        <a asp-action="Create" class="btn btn-sm mt-2"
+               style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-plus me-1"></i>Plan Oluştur
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var p in Model)
+        {
+            var toplamGelir = p.Kalemler
+                .Where(k => k.Tip ==
+                    ApartmanYonetim.Models.Entities.ButceKalemTipi.Gelir)
+                .Sum(k => k.PlanlananTutar);
+            var toplamGider = p.Kalemler
+                .Where(k => k.Tip ==
+                    ApartmanYonetim.Models.Entities.ButceKalemTipi.Gider)
+                .Sum(k => k.PlanlananTutar);
+            var net = toplamGelir - toplamGider;
+
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div style="font-size:20px;font-weight:700;color:#1e3a5f;">
+                                @p.Yil Yılı
+                            </div>
+                            @if (!string.IsNullOrEmpty(p.Aciklama))
+                            {
+                                <div style="font-size:12px;color:#718096;">
+                                    @p.Aciklama
+                                </div>
+                            }
+                        </div>
+                        <span class="badge"
+                              style="background:#e8f4fd;color:#2d6a9f;">
+                            @p.Kalemler.Count kalem
+                        </span>
+                    </div>
+
+                    <div class="mb-2" style="font-size:13px;">
+                        <div class="d-flex justify-content-between">
+                            <span style="color:#718096;">Planlanan Gelir:</span>
+                            <strong style="color:#27ae60;">
+                                @toplamGelir.ToString("N0") ₺
+                            </strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span style="color:#718096;">Planlanan Gider:</span>
+                            <strong style="color:#e74c3c;">
+                                @toplamGider.ToString("N0") ₺
+                            </strong>
+                        </div>
+                        <hr style="border-color:#e2e8f0;" />
+                        <div class="d-flex justify-content-between">
+                            <span style="font-weight:600;">Net:</span>
+                            <strong style="color:@(net >= 0 ? "#27ae60" : "#e74c3c");
+                                font-size:15px;">
+                                @net.ToString("N0") ₺
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <a asp-action="Detail" asp-route-id="@p.Id"
+                               class="btn btn-sm flex-grow-1"
+                               style="background:#1e3a5f;color:#fff;border-radius:8px;">
+                            <i class="fas fa-eye me-1"></i>Detay
+                        </a>
+                        <button type="button"
+                                onclick="butceSil(@p.Id, '@p.Yil')"
+                                class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <form id="butceSilForm_@p.Id"
+                              asp-action="Delete" asp-route-id="@p.Id"
+                              method="post" style="display:none;"></form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function butceSil(id, yil) {
+            showConfirm(`${yil} yılı bütçe planını silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (onay) document.getElementById(`butceSilForm_${id}`).submit();
+                });
+        }
+    </script>
+}

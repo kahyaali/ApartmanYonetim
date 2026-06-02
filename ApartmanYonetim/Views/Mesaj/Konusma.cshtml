@@ -1,0 +1,266 @@
+﻿
+
+@model List<ApartmanYonetim.Models.Entities.Mesaj>
+@{
+    ViewData["Title"] = "Mesajlar";
+}
+@{
+    var partner = ViewBag.Partner as ApartmanYonetim.Models.Entities.AppUser;
+    string benimId = ViewBag.BenimId;
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between w-100">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div style="width:38px;height:38px;border-radius:50%;background:#e8f4fd;
+                display:flex;align-items:center;justify-content:center;
+                font-weight:700;color:#2d6a9f;">
+                @partner?.Ad?.FirstOrDefault()@partner?.Soyad?.FirstOrDefault()
+            </div>
+            <div>
+                <div style="font-weight:600;color:#1e3a5f;">
+                    @partner?.Ad @partner?.Soyad
+                </div>
+                <div style="font-size:12px;color:#718096;" id="onlineStatus">
+                    <i class="fas fa-circle" style="font-size:8px;color:#27ae60;"></i>
+                    Çevrimiçi
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="KonusmaSil" method="post" onsubmit="return confirm('Tüm konuşma geçmişini silmek istediğinize emin misiniz?')">
+            <input type="hidden" name="partnerId" value="@partner?.Id" />
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-trash-alt me-1"></i> Sohbeti Temizle
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="table-card mb-3" style="min-height:400px;max-height:500px;overflow-y:auto;padding:20px;" id="mesajListesi">
+    @foreach (var m in Model)
+    {
+        bool benim = m.GonderenId == benimId;
+        <div class="mesaj-item d-flex @(benim ? "justify-content-end" : "justify-content-start") mb-3" data-id="@m.Id">
+            <div style="max-width:70%; position:relative;" class="mesaj-wrapper">
+
+                <div class="mesaj-balon" style="background:@(benim ? "#1e3a5f" : "#f0f2f5");
+                    color:@(benim ? "#fff" : "#2d3748");
+                    padding:12px @(benim ? "40px" : "16px") 12px @(benim ? "16px" : "40px");
+                    border-radius:@(benim ? "16px 16px 4px 16px" : "16px 16px 16px 4px");
+                    font-size:13px;line-height:1.6;
+                    box-shadow:0 2px 8px rgba(0,0,0,0.08); position:relative;">
+
+                    <form asp-action="MesajSil" method="post" style="@(benim ? "right:10px;" : "left:10px;");" class="sil-btn-form">
+                        <input type="hidden" name="mesajId" value="@m.Id" />
+                        <input type="hidden" name="partnerId" value="@partner?.Id" />
+                        <button type="submit" onclick="return confirm('Bu mesajı silmek istediğinize emin misiniz?')"
+                                style="background:none; border:none; color:@(benim ? "rgba(255,255,255,0.6)" : "#e74c3c"); cursor:pointer; font-size:12px; padding:4px;"
+                                title="Mesajı Sil">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+
+                    @m.Icerik
+                </div>
+
+                <div style="font-size:11px;color:#a0aec0;margin-top:4px; text-align:@(benim ? "right" : "left");">
+                    @m.GonderimTarihi.ToString("dd.MM.yyyy HH:mm")
+                    @if (benim)
+                    {
+                        if (m.Okundu)
+                        {
+                            <i class="fas fa-check-double ms-1" style="color:#27ae60;"></i>
+                        }
+                        else
+                        {
+                            <i class="fas fa-check ms-1"></i>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="table-card">
+    <div class="d-flex gap-2 align-items-end">
+        <textarea id="mesajInput"
+                  class="form-control"
+                  placeholder="Mesajınızı yazın... (Ctrl+Enter ile gönder)"
+                  rows="2"
+                  style="resize:none;border-radius:12px;font-size:13px;"></textarea>
+        <button id="gonderBtn"
+                onclick="mesajGonder()"
+                class="btn"
+                style="background:#1e3a5f;color:#fff;border-radius:12px;
+            padding:10px 20px;flex-shrink:0;">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+    <div style="font-size:11px;color:#a0aec0;margin-top:6px;">
+        Ctrl + Enter ile hızlı gönder
+    </div>
+</div>
+
+<style>
+ 
+    .sil-btn-form {
+        position: absolute;
+        top: 12px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s, visibility 0.2s;
+        z-index: 5;
+    }
+   
+    .mesaj-wrapper:hover .sil-btn-form {
+        opacity: 1;
+        visibility: visible;
+    }
+  
+    .sil-btn-form button:hover {
+        transform: scale(1.2);
+        color: #e74c3c !important;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        const partnerId = '@partner?.Id';
+        const benimId = '@benimId';
+        let sonMesajId = @(Model.Any() ? Model.Max(m => m.Id) : 0);
+
+        function scrollDown() {
+            const liste = document.getElementById('mesajListesi');
+            if (liste) liste.scrollTop = liste.scrollHeight;
+        }
+        scrollDown();
+
+        document.getElementById('mesajInput').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                mesajGonder();
+            }
+        });
+
+        async function mesajGonder() {
+            const input = document.getElementById('mesajInput');
+            const icerik = input.value.trim();
+            if (!icerik) return;
+
+            const btn = document.getElementById('gonderBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const token = document.querySelector(
+                    'input[name="__RequestVerificationToken"]')?.value || '';
+
+                const formData = new FormData();
+                formData.append('aliciId', partnerId);
+                formData.append('icerik', icerik);
+
+                const res = await fetch('/Mesaj/GonderAjax', {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    input.value = '';
+                    mesajEkle({
+                        id: data.id,
+                        icerik: data.icerik,
+                        gonderimTarihi: data.gonderimTarihi,
+                        gonderenId: benimId,
+                        okundu: false
+                    });
+                    sonMesajId = data.id;
+                    scrollDown();
+                }
+            } catch(e) {
+                console.warn('Mesaj gönderilemedi:', e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+   
+        function mesajEkle(m) {
+            const benim = m.gonderenId === benimId;
+            const liste = document.getElementById('mesajListesi');
+
+            if (document.querySelector(`[data-id="${m.id}"]`)) return;
+
+            const div = document.createElement('div');
+            div.className = `mesaj-item d-flex ${benim ? 'justify-content-end' : 'justify-content-start'} mb-3`;
+            div.setAttribute('data-id', m.id);
+
+            const silBtnYonu = benim ? 'right:10px;' : 'left:10px;';
+            const butonRengi = benim ? 'rgba(255,255,255,0.6)' : '#e74c3c';
+
+            div.innerHTML = `
+                <div style="max-width:70%; position:relative;" class="mesaj-wrapper">
+                    <div style="background:${benim ? '#1e3a5f' : '#f0f2f5'};
+                                 color:${benim ? '#fff' : '#2d3748'};
+                                 padding:12px ${benim ? '40px' : '16px'} 12px ${benim ? '16px' : '40px'};
+                                 border-radius:${benim ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};
+                                 font-size:13px;line-height:1.6;
+                                 box-shadow:0 2px 8px rgba(0,0,0,0.08); position:relative;">
+
+                        <form action="/Mesaj/MesajSil" method="post" style="${silBtnYonu}" class="sil-btn-form">
+                            <input type="hidden" name="mesajId" value="${m.id}" />
+                            <input type="hidden" name="partnerId" value="${partnerId}" />
+                            <button type="submit" onclick="return confirm('Bu mesajı silmek istediğinize emin misiniz?')"
+                                    style="background:none; border:none; color:${butonRengi}; cursor:pointer; font-size:12px; padding:4px;">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+
+                        ${escapeHtml(m.icerik)}
+                    </div>
+                    <div style="font-size:11px;color:#a0aec0;margin-top:4px; text-align:${benim ? 'right' : 'left'};">
+                        ${m.gonderimTarihi}
+                        ${benim ? `<i class="fas fa-check ms-1 ${m.okundu ? 'text-success' : ''}"></i>` : ''}
+                    </div>
+                </div>`;
+            liste.appendChild(div);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
+        }
+
+        async function yeniMesajlariCek() {
+            try {
+                const res = await fetch(
+                    `/Mesaj/YeniMesajlar?partnerId=${partnerId}&sonMesajId=${sonMesajId}`);
+                if (!res.ok) return;
+                const mesajlar = await res.json();
+
+                if (mesajlar.length > 0) {
+                    mesajlar.forEach(m => {
+                        mesajEkle(m);
+                        if (m.gonderimTarihi > sonMesajId) sonMesajId = m.id;
+                    });
+                    sonMesajId = mesajlar[mesajlar.length - 1].id;
+                    scrollDown();
+
+                    if (typeof mesajSayisiGuncelle === 'function')
+                        mesajSayisiGuncelle();
+                }
+            } catch(e) {}
+        }
+
+        setInterval(yeniMesajlariCek, 2000);
+    </script>
+}

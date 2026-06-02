@@ -1,0 +1,132 @@
+﻿@model List<ApartmanYonetim.Models.ViewModels.UserWithRoleViewModel>
+@{
+    ViewData["Title"] = "Kullanıcılar";
+}
+
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+   
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-user-cog me-2"></i>Kullanıcılar</h4>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3" style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblKullanicilar" class="table table-hover align-middle" style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>E-posta</th>
+                    <th>Daire No</th>
+                    <th>Rol</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:34px;height:34px;border-radius:50%;
+                                    background:#e8f4fd;display:flex;align-items:center;
+                                    justify-content:center;font-size:13px;
+                                    color:#2d6a9f;font-weight:600;flex-shrink:0;">
+                                    @(u.Ad.Length > 0 ? u.Ad[0].ToString() : "")@(u.Soyad.Length > 0 ? u.Soyad[0].ToString() : "")
+                                </div>
+                                <strong>@u.Ad @u.Soyad</strong>
+                            </div>
+                        </td>
+                        <td>@u.Email</td>
+                        <td>@(u.DaireNo.HasValue ? $"Daire {u.DaireNo}" : "-")</td>
+                        <td>
+                            @if (u.Rol == "Admin")
+                            {
+                                <span class="badge" style="background:#fdf2f2;color:#e74c3c;">Admin</span>
+                            }
+                            else
+                            {
+                                <span class="badge" style="background:#eafaf1;color:#27ae60;">Sakin</span>
+                            }
+                        </td>
+                        <td>
+                            @if (u.Rol != "Admin")
+                            {
+                                <form asp-action="UserDelete" asp-route-id="@u.Id"
+                                      method="post" class="d-inline">
+                                  @*   onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-danger"
+                                            style="font-size:11px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button> *@
+
+                                    <button type="button"
+                                            onclick="userSil('@u.Id', '@u.Ad @u.Soyad')"
+                                            class="btn btn-sm btn-outline-danger"
+                                            style="font-size:11px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted" style="font-size:11px;">Silinemez</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tblKullanicilar').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                pageLength: 10
+            });
+        });
+
+         function userSil(id, ad) {
+               showConfirm(`"${ad}" silmek istediğinize emin misiniz?`)
+                   .then(onay => {
+                       if (!onay) return;
+                       const form = document.createElement('form');
+                       form.method = 'POST';
+                       form.action = `/Admin/UserDelete/${id}`;
+                       const token = document.querySelector(
+                           'input[name="__RequestVerificationToken"]')?.value;
+                       if (token) {
+                           const inp = document.createElement('input');
+                           inp.type = 'hidden';
+                           inp.name = '__RequestVerificationToken';
+                           inp.value = token;
+                           form.appendChild(inp);
+                       }
+                       document.body.appendChild(form);
+                       form.submit();
+                   });
+           }
+    </script>
+}

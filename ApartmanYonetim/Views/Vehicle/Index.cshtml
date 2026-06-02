@@ -1,0 +1,289 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Vehicle>
+@{
+    ViewData["Title"] = "Araç / Otopark";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-car me-2"></i>Araç & Otopark Takibi</h4>
+    <a asp-action="Create" class="btn btn-sm"
+           style="background:#1e3a5f;color:#fff;border-radius:8px;">
+        <i class="fas fa-plus me-1"></i>Araç Ekle
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#e8f4fd;">
+                    <i class="fas fa-car" style="color:#2d6a9f;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.ToplamArac</div>
+                    <div class="stat-label">Sakin Aracı</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fdf6ec;">
+                    <i class="fas fa-user-friends" style="color:#e67e22;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.ToplamZiyaretci</div>
+                    <div class="stat-label">Ziyaretçi Aracı</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#eafaf1;">
+                    <i class="fas fa-parking" style="color:#27ae60;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.DoluOtopark</div>
+                    <div class="stat-label">Dolu Otopark</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Sakin Araçları -->
+<div class="table-card mb-4">
+    <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+        <i class="fas fa-car me-2"></i>Sakin Araçları
+    </h6>
+    <div class="table-responsive">
+        <table id="tblSakinArac" class="table table-hover align-middle"
+               style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Plaka</th>
+                    <th>Araç</th>
+                    <th>Renk</th>
+                    <th>Otopark No</th>
+                    <th>Daire</th>
+                    <th>Kayıt Tarihi</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in Model.Where(v => !v.ZiyaretciMi && v.AktifMi))
+                {
+                    <tr>
+                        <td>
+                            <span style="font-weight:700;font-size:14px;
+                                color:#1e3a5f;letter-spacing:1px;">
+                                @v.Plaka
+                            </span>
+                        </td>
+                        <td>
+                            <div>@v.Marka @v.Model</div>
+                            <div style="font-size:11px;color:#718096;">@v.AracTipi</div>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  style="background:#f0f2f5;color:#4a5568;">
+                                @v.Renk
+                            </span>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(v.OtoparkNo))
+                            {
+                                <span class="badge"
+                                      style="background:#e8f4fd;color:#2d6a9f;">
+                                    @v.OtoparkNo
+                                </span>
+                            }
+                            else
+                            {
+
+                                <span style="color:#a0aec0;">—</span>
+                            }
+                        </td>
+                        <td>
+                            @if (v.Apartment != null)
+                            {
+                                <div>Daire @v.Apartment.DaireNo</div>
+                                <div style="font-size:11px;color:#718096;">
+                                    @v.Apartment.Block?.Ad
+                                </div>
+                            }
+                        </td>
+                        <td>@v.KayitTarihi.ToString("dd.MM.yyyy")</td>
+                        <td>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <form asp-action="Delete" asp-route-id="@v.Id"
+                                      method="post" class="d-inline">
+                                    <button type="button"
+                                            onclick="aracSil(@v.Id, '@v.Plaka')"
+                                            class="btn btn-sm btn-outline-danger"
+                                            style="font-size:11px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Ziyaretçi Araçları -->
+<div class="table-card">
+    <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+        <i class="fas fa-user-friends me-2"></i>Ziyaretçi Araçları
+    </h6>
+    <div class="table-responsive">
+        <table id="tblZiyaretci" class="table table-hover align-middle"
+               style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Plaka</th>
+                    <th>Araç</th>
+                    <th>Ziyaret Edilen Daire</th>
+                    <th>Giriş</th>
+                    <th>Çıkış</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in Model.Where(v => v.ZiyaretciMi)
+                    .OrderByDescending(v => v.ZiyaretGiris))
+                {
+                    <tr class="@(v.AktifMi ? "" : "")">
+                        <td>
+                            <span style="font-weight:700;font-size:14px;
+                                color:#1e3a5f;letter-spacing:1px;">
+                                @v.Plaka
+                            </span>
+                        </td>
+                        <td>@v.Marka @v.Model</td>
+                        <td>
+                            @if (v.Apartment != null)
+                            {
+                                <span>Daire @v.Apartment.DaireNo</span>
+                            }
+                        </td>
+                        <td>@v.ZiyaretGiris?.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            @(v.ZiyaretCikis.HasValue
+                                ? v.ZiyaretCikis.Value.ToString("dd.MM.yyyy HH:mm")
+                                : "—")
+                        </td>
+                        <td>
+                            @if (v.AktifMi)
+                            {
+                                <span class="badge bg-warning text-dark"
+                                      style="font-size:11px;">
+                                    İçeride
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary"
+                                      style="font-size:11px;">
+                                    Çıktı
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @if (v.AktifMi && v.ZiyaretciMi)
+                            {
+                                <form asp-action="ZiyaretciCikis"
+                                      asp-route-id="@v.Id" method="post"
+                                      class="d-inline">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-warning"
+                                            style="font-size:11px;">
+                                        <i class="fas fa-sign-out-alt me-1"></i>Çıkış
+                                    </button>
+                                </form>
+                            }
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <form asp-action="Delete" asp-route-id="@v.Id"
+                                      method="post" class="d-inline">
+                                    <button type="button"
+                                            onclick="aracSil(@v.Id, '@v.Plaka')"
+                                            class="btn btn-sm btn-outline-danger"
+                                            style="font-size:11px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tblSakinArac').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                pageLength: 10
+            });
+            $('#tblZiyaretci').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                pageLength: 10,
+                order: [[3, 'desc']]
+            });
+        });
+
+        // Araç silme onayı
+         function aracSil(id, ad) {
+            showConfirm(`"${ad}" nolu aracı silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (!onay) return;
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/Vehicle/Delete/${id}`;
+                    const token = document.querySelector(
+                        'input[name="__RequestVerificationToken"]')?.value;
+                    if (token) {
+                        const inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = '__RequestVerificationToken';
+                        inp.value = token;
+                        form.appendChild(inp);
+                    }
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+        }
+    </script>
+}

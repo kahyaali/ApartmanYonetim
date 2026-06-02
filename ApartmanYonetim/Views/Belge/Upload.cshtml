@@ -1,0 +1,203 @@
+﻿@model ApartmanYonetim.Models.ViewModels.BelgeViewModel
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Belge Yükle";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-upload me-2"></i>Belge Yükle</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger mb-3" style="font-size:13px;">
+        @foreach (var error in ViewData.ModelState.Values
+            .SelectMany(v => v.Errors))
+        {
+            <div>
+                <i class="fas fa-exclamation-circle me-1"></i>
+                @error.ErrorMessage
+            </div>
+        }
+    </div>
+}
+
+<div class="form-card" style="max-width:640px;">
+    <form asp-action="Upload" method="post"
+          enctype="multipart/form-data" novalidate>
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label" style="font-size:13px;">Ad *</label>
+                <input name="Ad" value="@Model.Ad"
+                       class="form-control"
+                       placeholder="Belge adı" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Kategori</label>
+                <select name="Kategori" class="form-select">
+                    @foreach (BelgeKategori k in
+                        Enum.GetValues(typeof(BelgeKategori)))
+                    {
+                        <option value="@((int)k)"
+                                selected="@(Model.Kategori == k)">
+                            @k
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    Açıklama
+                </label>
+                <input name="Aciklama" value="@Model.Aciklama"
+                       class="form-control"
+                       placeholder="Opsiyonel açıklama" />
+            </div>
+
+            <!-- Dosya Sürükle-Bırak -->
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    Dosya *
+                </label>
+                <div id="dropZone"
+                     style="border:2px dashed #e2e8f0;border-radius:12px;
+                    padding:32px;text-align:center;cursor:pointer;
+                    background:#fafafa;transition:all 0.2s;"
+                     ondragover="event.preventDefault();
+                    this.style.borderColor='#2d6a9f';
+                    this.style.background='#e8f4fd';"
+                     ondragleave="this.style.borderColor='#e2e8f0';
+                    this.style.background='#fafafa';"
+                     ondrop="handleDrop(event)"
+                     onclick="document.getElementById('dosyaInput').click()">
+                    <i class="fas fa-cloud-upload-alt"
+                       style="font-size:40px;color:#a0aec0;
+                    display:block;margin-bottom:12px;"
+                       id="dropIcon"></i>
+                    <div style="font-size:14px;color:#718096;"
+                         id="dropText">
+                        Dosyayı buraya sürükleyin veya <strong>tıklayın</strong>
+                    </div>
+                    <div style="font-size:11px;color:#a0aec0;margin-top:6px;">
+                        PDF, Word, Excel, Resim, TXT, ZIP — Maks. 20MB
+                    </div>
+                </div>
+                <input type="file" id="dosyaInput" name="Dosya"
+                       style="display:none;"
+                       accept=".pdf,.doc,.docx,.xlsx,.xls,
+                .jpg,.jpeg,.png,.txt,.zip"
+                       onchange="dosyaSecildi(this)" />
+
+                <!-- Seçilen dosya önizlemesi -->
+                <div id="dosyaOnizleme"
+                     style="display:none;margin-top:12px;
+                    background:#f0fff4;border:1px solid #27ae60;
+                    border-radius:10px;padding:12px 16px;">
+                    <div class="d-flex align-items-center gap-3">
+                        <i id="dosyaIkonu"
+                           class="fas fa-file"
+                           style="font-size:28px;flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-weight:600;font-size:13px;"
+                                 id="dosyaAdText"></div>
+                            <div style="font-size:11px;color:#718096;"
+                                 id="dosyaBoyutText"></div>
+                        </div>
+                        <button type="button" onclick="dosyaTemizle()"
+                                style="margin-left:auto;background:none;
+                            border:none;color:#e74c3c;
+                            cursor:pointer;font-size:18px;">
+                            ×
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check"
+                     style="background:#f8fafc;padding:12px 16px;
+                    border-radius:10px;">
+                    <input name="HerkesGorebilir" type="checkbox"
+                           id="herkesCheck"
+                           class="form-check-input"
+                    @(Model.HerkesGorebilir ? "checked" : "") />
+                    <label class="form-check-label" for="herkesCheck"
+                           style="font-size:13px;">
+                        <strong>Tüm sakinler görebilir</strong>
+                        <div style="font-size:11px;color:#718096;">
+                            İşaretlenmezse sadece adminler görebilir.
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-12 mt-2">
+                <button type="submit" id="submitBtn"
+                        class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-upload me-2"></i>Yükle
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        const ikonlar = {
+            pdf:  { cls: 'fa-file-pdf',     renk: '#e74c3c' },
+            docx: { cls: 'fa-file-word',    renk: '#2d6a9f' },
+            doc:  { cls: 'fa-file-word',    renk: '#2d6a9f' },
+            xlsx: { cls: 'fa-file-excel',   renk: '#27ae60' },
+            xls:  { cls: 'fa-file-excel',   renk: '#27ae60' },
+            jpg:  { cls: 'fa-file-image',   renk: '#f39c12' },
+            jpeg: { cls: 'fa-file-image',   renk: '#f39c12' },
+            png:  { cls: 'fa-file-image',   renk: '#f39c12' },
+            zip:  { cls: 'fa-file-archive', renk: '#8e44ad' },
+            txt:  { cls: 'fa-file-alt',     renk: '#718096' }
+        };
+
+        function dosyaSecildi(input) {
+            const dosya = input.files[0];
+            if (!dosya) return;
+
+            const uzanti = dosya.name.split('.').pop().toLowerCase();
+            const ikon = ikonlar[uzanti] || { cls: 'fa-file', renk: '#718096' };
+            const boyut = dosya.size < 1024 * 1024
+                ? `${Math.round(dosya.size / 1024)} KB`
+                : `${(dosya.size / 1024 / 1024).toFixed(1)} MB`;
+
+            document.getElementById('dosyaIkonu').className =
+                `fas ${ikon.cls}`;
+            document.getElementById('dosyaIkonu').style.color = ikon.renk;
+            document.getElementById('dosyaAdText').textContent = dosya.name;
+            document.getElementById('dosyaBoyutText').textContent = boyut;
+            document.getElementById('dosyaOnizleme').style.display = 'block';
+            document.getElementById('dropZone').style.display = 'none';
+        }
+
+        function dosyaTemizle() {
+            document.getElementById('dosyaInput').value = '';
+            document.getElementById('dosyaOnizleme').style.display = 'none';
+            document.getElementById('dropZone').style.display = 'block';
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.style.borderColor = '#e2e8f0';
+            event.currentTarget.style.background = '#fafafa';
+            const input = document.getElementById('dosyaInput');
+            input.files = event.dataTransfer.files;
+            dosyaSecildi(input);
+        }
+
+        document.querySelector('form').addEventListener('submit', function() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Yükleniyor...';
+        });
+    </script>
+}

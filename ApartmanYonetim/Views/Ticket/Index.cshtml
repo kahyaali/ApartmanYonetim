@@ -1,0 +1,192 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Ticket>
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Arıza & Talepler";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-tools me-2"></i>Arıza & Talepler</h4>
+    <a asp-action="Create" class="btn btn-sm"
+           style="background:#1e3a5f;color:#fff;border-radius:8px;">
+        <i class="fas fa-plus me-1"></i>Yeni Talep
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fdf6ec;">
+                    <i class="fas fa-clock" style="color:#e67e22;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.ToplamAcik</div>
+                    <div class="stat-label">Açık Talep</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#eafaf1;">
+                    <i class="fas fa-check-circle" style="color:#27ae60;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.ToplamKapali</div>
+                    <div class="stat-label">Tamamlanan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3" style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblTicket" class="table table-hover align-middle" style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>#</th>
+                    <th>Başlık</th>
+                    <th>Kategori</th>
+                    <th>Daire</th>
+                    <th>Öncelik</th>
+                    <th>Durum</th>
+                    <th>Tarih</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model)
+                {
+                    string durumClass = t.Durum switch
+                    {
+                        TicketDurum.Bekliyor => "badge bg-warning text-dark",
+                        TicketDurum.Inceleniyor => "badge bg-info text-dark",
+                        TicketDurum.Tamamlandi => "badge bg-success",
+                        TicketDurum.Iptal => "badge bg-secondary",
+                        _ => "badge bg-secondary"
+                    };
+
+                    string oncelikClass = t.Oncelik switch
+                    {
+                        TicketOncelik.Acil => "badge bg-danger",
+                        TicketOncelik.Yuksek => "badge bg-warning text-dark",
+                        TicketOncelik.Normal => "badge bg-primary",
+                        TicketOncelik.Dusuk => "badge bg-secondary",
+                        _ => "badge bg-secondary"
+                    };
+
+                    string rowBg = t.Durum switch
+                    {
+                        TicketDurum.Tamamlandi => "row-yesil",
+                        TicketDurum.Bekliyor when t.Oncelik == TicketOncelik.Acil => "row-kirmizi",
+                        TicketDurum.Iptal => "",
+                        _ => ""
+                    };
+
+                    <tr class="@rowBg">
+                        <td style="color:#718096;">#@t.Id</td>
+                        <td>
+                            <div style="font-weight:600;">@t.Baslik</div>
+                            <div style="font-size:11px;color:#718096;">
+                                @t.Aciklama.Substring(0, Math.Min(t.Aciklama.Length, 50))
+                                @(t.Aciklama.Length > 50 ? "..." : "")
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  style="background:#e8f4fd;color:#2d6a9f;font-size:11px;">
+                                @t.Kategori
+                            </span>
+                        </td>
+                        <td>
+                            @if (t.Apartment != null)
+                            {
+                                <div>Daire @t.Apartment.DaireNo</div>
+                                @if (t.Apartment.Block != null)
+                                {
+                                    <div style="font-size:11px;color:#718096;">
+                                        @t.Apartment.Block.Ad
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
+                        <td><span class="@oncelikClass" style="font-size:11px;">@t.Oncelik</span></td>
+                        <td><span class="@durumClass" style="font-size:11px;">@t.Durum</span></td>
+                        <td>
+                            <div>@t.OlusturmaTarihi.ToString("dd.MM.yyyy")</div>
+                            <div style="font-size:11px;color:#718096;">
+                                @t.OlusturmaTarihi.ToString("HH:mm")
+                            </div>
+                        </td>
+                        <td>
+                            <a asp-action="Detail" asp-route-id="@t.Id"
+                                   class="btn btn-sm btn-outline-primary" style="font-size:11px;">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <form asp-action="Delete" asp-route-id="@t.Id"
+                                      method="post" class="d-inline">
+                                    <button type="button"
+                                            onclick="ticketSil(@t.Id, '@t.Baslik')"
+                                            class="btn btn-sm btn-outline-danger"
+                                            style="font-size:11px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tblTicket').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' },
+                pageLength: 15,
+                order: [[6, 'desc']]
+            });
+        });
+
+        // Ticket silme onayı
+         function ticketSil(id, ad) {
+            showConfirm(`"${ad}"  silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (!onay) return;
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/Ticket/Delete/${id}`;
+                    const token = document.querySelector(
+                        'input[name="__RequestVerificationToken"]')?.value;
+                    if (token) {
+                        const inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = '__RequestVerificationToken';
+                        inp.value = token;
+                        form.appendChild(inp);
+                    }
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+        }
+    </script>
+}

@@ -1,0 +1,232 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Kargo>
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Kargo & Paket Takibi";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-box me-2"></i>Kargo & Paket Takibi</h4>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-sm"
+               style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-plus me-1"></i>Kargo Ekle
+        </a>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fdf6ec;">
+                    <i class="fas fa-box" style="color:#e67e22;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.Bekleyen</div>
+                    <div class="stat-label">Teslim Bekliyor</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#eafaf1;">
+                    <i class="fas fa-check-circle" style="color:#27ae60;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.Teslim</div>
+                    <div class="stat-label">Teslim Edildi</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3" style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-3" style="font-size:13px;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblKargo" class="table table-hover align-middle" style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Alıcı</th>
+                    <th>Daire</th>
+                    <th>Kargo Firma</th>
+                    <th>Takip No</th>
+                    <th>Geliş Tarihi</th>
+                    <th>Teslim Tarihi</th>
+                    <th>Teslim Alan</th>
+                    <th>Durum</th>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <th>İşlem</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var k in Model)
+                {
+                    string rowClass = k.Durum switch
+                    {
+                        KargoDurum.Bekliyor => "row-turuncu",
+                        KargoDurum.Teslim => "row-yesil",
+                        KargoDurum.Iade => "row-kirmizi",
+                        _ => ""
+                    };
+
+                    string durumClass = k.Durum switch
+                    {
+                        KargoDurum.Bekliyor => "badge bg-warning text-dark",
+                        KargoDurum.Teslim => "badge bg-success",
+                        KargoDurum.Iade => "badge bg-danger",
+                        _ => "badge bg-secondary"
+                    };
+
+                    <tr class="@rowClass">
+                        <td><strong>@k.AliciAd</strong></td>
+                        <td>
+                            @if (k.Apartment != null)
+                            {
+                                <div>Daire @k.Apartment.DaireNo</div>
+                                <div style="font-size:11px;color:#718096;">
+                                    @k.Apartment.Block?.Ad
+                                </div>
+                            }
+                            else
+                            {
+
+                                <span>—</span>
+                            }
+                        </td>
+                        <td>@(k.KargoFirma ?? "—")</td>
+                        <td style="font-size:12px;font-family:monospace;">
+                            @(k.TakipNo ?? "—")
+                        </td>
+                        <td>@k.GelisTarihi.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            @(k.TeslimTarihi.HasValue
+                                ? k.TeslimTarihi.Value.ToString("dd.MM.yyyy HH:mm")
+                                : "—")
+                        </td>
+                        <td>@(k.TeslimAlan ?? "—")</td>
+                        <td>
+                            <span class="@durumClass" style="font-size:11px;">
+                                @k.Durum
+                            </span>
+                        </td>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <td>
+                                @if (k.Durum == KargoDurum.Bekliyor)
+                                {
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-success"
+                                            style="font-size:11px;"
+                                            onclick="teslimModal(@k.Id)">
+                                        <i class="fas fa-check me-1"></i>Teslim Et
+                                    </button>
+                                }
+                                <form asp-action="Delete" asp-route-id="@k.Id"
+                                      method="post" class="d-inline">
+                                    <button type="button"
+                                            onclick="kargoSil(@k.Id, '@k.KargoFirma')"
+                                            class="btn btn-sm btn-outline-danger"
+                                            style="font-size:11px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Teslim Modal -->
+<div class="modal fade" id="teslimModalEl" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header">
+                <h6 class="modal-title" style="font-weight:600;color:#1e3a5f;">
+                    <i class="fas fa-check me-2"></i>Kargo Teslim Et
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Teslim" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="teslimId" name="id" />
+                    <label class="form-label" style="font-size:13px;">
+                        Teslim Alan Kişi
+                    </label>
+                    <input type="text" name="teslimAlan" class="form-control"
+                           placeholder="Ad Soyad" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        İptal
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-success">
+                        <i class="fas fa-check me-1"></i>Teslim Et
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function teslimModal(id) {
+            document.getElementById('teslimId').value = id;
+            new bootstrap.Modal(document.getElementById('teslimModalEl')).show();
+        }
+
+        $(document).ready(function() {
+            $('#tblKargo').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' },
+                pageLength: 15,
+                order: [[4, 'desc']]
+            });
+        });
+
+         // Kargo silme onayı
+         function kargoSil(id, ad) {
+            showConfirm(`"${ad}" Kargoyu silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (!onay) return;
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/Kargo/Delete/${id}`;
+                    const token = document.querySelector(
+                        'input[name="__RequestVerificationToken"]')?.value;
+                    if (token) {
+                        const inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = '__RequestVerificationToken';
+                        inp.value = token;
+                        form.appendChild(inp);
+                    }
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+        }
+    </script>
+}

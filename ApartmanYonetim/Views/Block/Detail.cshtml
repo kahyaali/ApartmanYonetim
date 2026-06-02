@@ -1,0 +1,96 @@
+﻿@model ApartmanYonetim.Models.Entities.Block
+@{
+    ViewData["Title"] = $"{Model.Ad} — Daireler";
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-building me-2"></i>@Model.Ad — Daireler</h4>
+    <div class="d-flex gap-2">
+     
+        <a asp-controller="Admin" asp-action="ApartmentCreate"
+               class="btn btn-sm" style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-plus me-1"></i>Daire Ekle
+        </a>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Geri
+        </a>
+    </div>
+</div>
+
+@{
+    var katlar = Model.Apartments
+        .GroupBy(a => a.Kat)
+        .OrderByDescending(g => g.Key);
+}
+
+@foreach (var kat in katlar)
+{
+    <div class="table-card mb-3">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <div style="width:32px;height:32px;border-radius:8px;background:#e8f4fd;
+                display:flex;align-items:center;justify-content:center;
+                font-size:13px;font-weight:700;color:#2d6a9f;">
+                @kat.Key
+            </div>
+            <span style="font-size:14px;font-weight:600;color:#1e3a5f;">@kat.Key. Kat</span>
+            <span style="font-size:12px;color:#718096;">— @kat.Count() daire</span>
+        </div>
+
+        <div class="row g-2">
+            @foreach (var daire in kat.OrderBy(a => a.DaireNo))
+            {
+                var aktifSakin = daire.Residents.FirstOrDefault();
+                <div class="col-md-3 col-6">
+                    <div style="border:1px solid @(daire.Dolu ? "#bee3f8" : "#e2e8f0");
+                        border-radius:10px;padding:14px;
+                        background:@(daire.Dolu ? "#ebf8ff" : "#f8fafc");">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span style="font-size:15px;font-weight:700;color:#1e3a5f;">
+                                Daire @daire.DaireNo
+                            </span>
+                            @if (daire.Dolu)
+                            {
+                                <span style="width:8px;height:8px;border-radius:50%;
+                                background:#27ae60;display:inline-block;"></span>
+                            }
+                            else
+                            {
+                                <span style="width:8px;height:8px;border-radius:50%;
+                                background:#e2e8f0;display:inline-block;"></span>
+                            }
+                        </div>
+                        <div style="font-size:11px;color:#718096;">@daire.Tipi · @daire.MetreKare m²</div>
+                        @if (aktifSakin != null)
+                        {
+                            <div style="font-size:12px;color:#2d6a9f;margin-top:4px;font-weight:500;">
+                                <i class="fas fa-user me-1" style="font-size:10px;"></i>
+                                @aktifSakin.Ad @aktifSakin.Soyad
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="font-size:12px;color:#a0aec0;margin-top:4px;">Boş</div>
+                        }
+                        <div class="d-flex gap-1 mt-2">
+                            <a asp-controller="Admin" asp-action="ApartmentEdit"
+                                   asp-route-id="@daire.Id"
+                                   class="btn btn-sm btn-outline-primary"
+                                   style="font-size:10px;padding:2px 8px;">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

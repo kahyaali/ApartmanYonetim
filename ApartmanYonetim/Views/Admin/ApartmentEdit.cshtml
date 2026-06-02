@@ -1,0 +1,78 @@
+﻿@model ApartmanYonetim.Models.Entities.Apartment
+@{
+    ViewData["Title"] = "Daire Düzenle";
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-edit me-2"></i>Daire Düzenle</h4>
+    <a asp-action="Apartments" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card">
+    <form asp-action="ApartmentEdit" method="post">
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Blok</label>
+                <select name="BlockId" class="form-select">
+                    <option value="">Blok Seçiniz</option>
+                    @foreach (SelectListItem item in ViewBag.Bloklar)
+                    {
+                        <option value="@item.Value"
+                                selected="@(item.Value == Model.BlockId?.ToString())">
+                            @item.Text
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" style="font-size:13px;">Kat</label>
+                <input name="Kat" class="form-control" type="number"
+                       value="@Model.Kat" min="0" max="50" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" style="font-size:13px;">Daire No</label>
+                <input name="DaireNo" class="form-control" type="number"
+                       value="@Model.DaireNo" min="1" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Daire Tipi</label>
+                <select name="Tipi" class="form-select">
+                    @foreach (var tip in new[] { "1+1", "2+1", "3+1", "4+1", "Dubleks" })
+                    {
+                        <option value="@tip" selected="@(Model.Tipi == tip)">@tip</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" style="font-size:13px;">Metrekare</label>
+                <input name="MetreKare" class="form-control" type="number"
+                       step="0.5" value="@Model.MetreKare" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" style="font-size:13px;">Durum</label>
+                <select name="Dolu" class="form-select">
+                    <option value="false" selected="@(!Model.Dolu)">Boş</option>
+                    <option value="true" selected="@Model.Dolu">Dolu</option>
+                </select>
+            </div>
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-save me-2"></i>Güncelle
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

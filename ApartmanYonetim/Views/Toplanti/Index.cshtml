@@ -1,0 +1,171 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Toplanti>
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Toplantılar";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-calendar-check me-2"></i>Toplantılar</h4>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-sm"
+               style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-plus me-1"></i>Yeni Toplantı
+        </a>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#e8f4fd;">
+                    <i class="fas fa-calendar" style="color:#2d6a9f;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.Planlanan</div>
+                    <div class="stat-label">Planlanan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#eafaf1;">
+                    <i class="fas fa-check-circle" style="color:#27ae60;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.Tamamlanan</div>
+                    <div class="stat-label">Tamamlanan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@foreach (var t in Model)
+{
+    string durumClass = t.Durum switch
+    {
+        ToplantiDurum.Planlanıyor => "badge bg-primary",
+        ToplantiDurum.Tamamlandi => "badge bg-success",
+        ToplantiDurum.Iptal => "badge bg-secondary",
+        _ => "badge bg-secondary"
+    };
+
+    string borderColor = t.Durum switch
+    {
+        ToplantiDurum.Planlanıyor => "#2d6a9f",
+        ToplantiDurum.Tamamlandi => "#27ae60",
+        ToplantiDurum.Iptal => "#a0aec0",
+        _ => "#e2e8f0"
+    };
+
+    <div class="table-card mb-3"
+         style="border-left:4px solid @borderColor;">
+        <div class="d-flex align-items-start justify-content-between">
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <h6 class="mb-0" style="font-weight:600;color:#1e3a5f;">
+                        @t.Baslik
+                    </h6>
+                    <span class="@durumClass" style="font-size:11px;">
+                        @t.Durum
+                    </span>
+                </div>
+
+                <div class="d-flex flex-wrap gap-3 mb-2"
+                     style="font-size:12px;color:#718096;">
+                    <span>
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        @t.Tarih.ToString("dd MMMM yyyy HH:mm",
+                            new System.Globalization.CultureInfo("tr-TR"))
+                    </span>
+                    @if (!string.IsNullOrEmpty(t.Konum))
+                    {
+                        <span>
+                            <i class="fas fa-map-marker-alt me-1"></i>@t.Konum
+                        </span>
+                    }
+                    <span>
+                        <i class="fas fa-user me-1"></i>
+                        @t.Olusturan?.Ad @t.Olusturan?.Soyad
+                    </span>
+                </div>
+
+                @if (!string.IsNullOrEmpty(t.Aciklama))
+                {
+                    <p style="font-size:13px;color:#4a5568;margin-bottom:8px;">
+                        @t.Aciklama
+                    </p>
+                }
+
+                @if (!string.IsNullOrEmpty(t.Notlar))
+                {
+                    <div style="background:#f8fafc;border-radius:8px;
+                        padding:10px 14px;font-size:12px;color:#718096;">
+                        <i class="fas fa-sticky-note me-1"></i>@t.Notlar
+                    </div>
+                }
+            </div>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="d-flex gap-2 ms-3">
+                    <a asp-action="Edit" asp-route-id="@t.Id"
+                           class="btn btn-sm btn-outline-primary"
+                           style="font-size:11px;">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button type="button"
+                            onclick="silOnay(@t.Id, '@t.Baslik')"
+                            class="btn btn-sm btn-outline-danger"
+                            style="font-size:11px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <form id="silForm_@t.Id" asp-action="Delete"
+                          asp-route-id="@t.Id" method="post"
+                          style="display:none;"></form>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="table-card text-center py-5">
+        <i class="fas fa-calendar text-muted"
+           style="font-size:48px;opacity:0.3;"></i>
+        <p class="text-muted mt-3">Henüz toplantı planlanmamış.</p>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function silOnay(id, baslik) {
+            showConfirm(`"${baslik}" toplantısını silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (onay) document.getElementById(`silForm_${id}`).submit();
+                });
+        }
+    </script>
+}

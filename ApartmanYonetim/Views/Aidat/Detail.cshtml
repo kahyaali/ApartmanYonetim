@@ -1,0 +1,167 @@
+﻿@model ApartmanYonetim.Models.Entities.AidatTanimi
+@{
+    ViewData["Title"] = "Aidat Detay";
+    var ayAdi = new DateTime(Model.Yil, Model.Ay, 1)
+        .ToString("MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"));
+}
+
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4>
+        <i class="fas fa-file-invoice-dollar me-2"></i>
+        @Model.Baslik — @ayAdi
+    </h4>
+ 
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<!-- Özet -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="font-size:20px;color:#27ae60;">
+                @ViewBag.ToplamTahsilat.ToString("N0") ₺
+            </div>
+            <div class="stat-label">Tahsil Edilen</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="font-size:20px;color:#e74c3c;">
+                @(((decimal)ViewBag.ToplamBeklenen - (decimal)ViewBag.ToplamTahsilat).ToString("N0")) ₺
+            </div>
+            <div class="stat-label">Bekleyen</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="font-size:20px;">@ViewBag.OdenenSayi</div>
+            <div class="stat-label">Ödeyen Daire</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="font-size:20px;color:#e74c3c;">
+                @ViewBag.OdenmeyenSayi
+            </div>
+            <div class="stat-label">Ödemesi Bekleyen</div>
+        </div>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblAidatDetay" class="table table-hover align-middle" style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Blok</th>
+                    <th>Daire</th>
+                    <th>Tutar</th>
+                    <th>Ödenen</th>
+                    <th>Kalan</th>
+                    <th>Son Tarih</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Payments.OrderBy(p => p.Apartment?.Block?.Ad)
+                                                                  .ThenBy(p => p.Apartment?.DaireNo))
+                {
+                    var bugun = DateTime.Today;
+                    var fark = (p.SonOdemeTarihi.Date - bugun).TotalDays;
+                    string rowClass, durum, durumClass;
+
+                    if (p.Odendi)
+                    {
+                        rowClass = "row-yesil"; durum = "Ödendi";
+                        durumClass = "badge bg-success";
+                    }
+                    else if (fark <= 3)
+                    {
+                        rowClass = "row-kirmizi"; durum = "Acil";
+                        durumClass = "badge bg-danger";
+                    }
+                    else if (fark <= 5)
+                    {
+                        rowClass = "row-sari"; durum = "Yaklaşıyor";
+                        durumClass = "badge bg-warning text-dark";
+                    }
+                    else
+                    {
+                        rowClass = "row-turuncu"; durum = "Bekliyor";
+                        durumClass = "badge bg-secondary";
+                    }
+
+                    <tr class="@rowClass">
+                        <td>@(p.Apartment?.Block?.Ad ?? "-")</td>
+                        <td><strong>Daire @p.Apartment?.DaireNo</strong></td>
+                        <td>@p.Tutar.ToString("N2") ₺</td>
+                        <td>@p.OdenenTutar.ToString("N2") ₺</td>
+                        <td>
+                            @if ((p.Tutar - p.OdenenTutar) > 0)
+                            {
+                                <strong style="color:#e74c3c;">
+                                    @((p.Tutar - p.OdenenTutar).ToString("N2")) ₺
+                                </strong>
+                            }
+                            else
+                            {
+                                <span style="color:#27ae60;">—</span>
+                            }
+                        </td>
+                        <td>@p.SonOdemeTarihi.ToString("dd.MM.yyyy")</td>
+                        <td>
+                            <span class="@durumClass" style="font-size:11px;">@durum</span>
+                        </td>
+                        <td>
+                           @*  <a asp-controller="Payment" asp-action="Edit"
+                                   asp-route-id="@p.Id"
+                                   class="btn btn-sm btn-outline-primary" style="font-size:11px;">
+                                <i class="fas fa-edit"></i>
+                            </a> *@
+
+                            @if (!p.Odendi)
+                            {
+                                <a asp-controller="Payment" asp-action="AddTransaction"
+                                       asp-route-id="@p.Id"
+                                       class="btn btn-sm btn-outline-success" style="font-size:11px;"
+                                       title="Ödeme Al">
+                                    <i class="fas fa-plus me-1"></i>Ödeme Al
+                                </a>
+                            }
+                            <a asp-controller="Payment" asp-action="Detail"
+                                   asp-route-id="@p.Id"
+                                   class="btn btn-sm btn-outline-primary" style="font-size:11px;"
+                                   title="Hareketler">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tblAidatDetay').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' },
+                pageLength: 20
+            });
+        });
+    </script>
+}

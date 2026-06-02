@@ -1,0 +1,130 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Announcement>
+@{
+    ViewData["Title"] = "Duyurular";
+}
+
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-bullhorn me-2"></i>Duyurular</h4>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-sm"
+               style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-plus me-1"></i>Yeni Duyuru
+        </a>
+    }
+    <button onclick="window.print()"
+            class="btn btn-sm btn-outline-secondary no-print">
+        <i class="fas fa-print me-1"></i>Yazdır
+    </button>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3" style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="table-card text-center py-5">
+        <i class="fas fa-bullhorn text-muted" style="font-size:48px;opacity:0.3;"></i>
+        <p class="text-muted mt-3">Henüz duyuru yayınlanmamış.</p>
+    </div>
+}
+else
+{
+    @foreach (var d in Model)
+    {
+        <div class="table-card mb-3" style="border-left: 4px solid @(d.AktifMi ? "#1e3a5f" : "#ccc");">
+            <div class="d-flex align-items-start justify-content-between gap-3">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h6 class="mb-0 fw-600" style="color:#1e3a5f;">@d.Baslik</h6>
+                        @if (!d.AktifMi)
+                        {
+                            <span class="badge bg-secondary" style="font-size:10px;">Pasif</span>
+                        }
+                        else
+                        {
+                            <span class="badge" style="background:#eafaf1;color:#27ae60;font-size:10px;">
+                                Yayında
+                            </span>
+                        }
+                    </div>
+                    <p class="mb-2" style="font-size:14px;color:#4a5568;line-height:1.7;">
+                        @d.Icerik
+                    </p>
+                    <span style="font-size:12px;color:#a0aec0;">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        @d.YayinTarihi.ToString("dd MMMM yyyy HH:mm",
+                            new System.Globalization.CultureInfo("tr-TR"))
+                    </span>
+                </div>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="d-flex gap-2 flex-shrink-0">
+                        <form asp-action="ToggleActive" asp-route-id="@d.Id" method="post">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                    style="font-size:11px;" title="@(d.AktifMi ? "Pasife Al" : "Aktife Al")">
+                                <i class="fas @(d.AktifMi ? "fa-eye-slash" : "fa-eye")"></i>
+                            </button>
+                        </form>
+                        <a asp-action="Edit" asp-route-id="@d.Id"
+                               class="btn btn-sm btn-outline-primary" style="font-size:11px;">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form asp-action="Delete" asp-route-id="@d.Id" method="post" class="d-inline">
+                            <button type="button" 
+                                    onclick="duyuruSil(@d.Id, '@d.Baslik')"
+                                class="btn btn-sm btn-outline-danger"
+                                    style="font-size:11px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+@section Scripts {
+    <script>
+      
+         // Duyuru silme onayı
+         function duyuruSil(id, ad) {
+            showConfirm(`"${ad}" Duyuruyu silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (!onay) return;
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/Announcement/Delete/${id}`;
+                    const token = document.querySelector(
+                        'input[name="__RequestVerificationToken"]')?.value;
+                    if (token) {
+                        const inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = '__RequestVerificationToken';
+                        inp.value = token;
+                        form.appendChild(inp);
+                    }
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+        }
+    </script>
+}

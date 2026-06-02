@@ -1,0 +1,48 @@
+﻿@model ApartmanYonetim.Models.ViewModels.AnnouncementViewModel
+@{
+    ViewData["Title"] = "Yeni Duyuru";
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-plus me-2"></i>Yeni Duyuru</h4>
+  
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card" style="max-width:640px;">
+    <form asp-action="Create" method="post">
+        <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">Başlık</label>
+            <input asp-for="Baslik" class="form-control" placeholder="Duyuru başlığı..." />
+            <span asp-validation-for="Baslik" class="text-danger" style="font-size:12px;"></span>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">İçerik</label>
+            <textarea asp-for="Icerik" class="form-control" rows="6"
+                      placeholder="Duyuru içeriği..."></textarea>
+            <span asp-validation-for="Icerik" class="text-danger" style="font-size:12px;"></span>
+        </div>
+        <div class="mb-4">
+            <div class="form-check">
+                <input asp-for="AktifMi" class="form-check-input" />
+                <label class="form-check-label" style="font-size:13px;">
+                    Hemen yayınla
+                </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-auth" style="width:auto;padding:10px 32px;">
+            <i class="fas fa-bullhorn me-2"></i>Duyuruyu Yayınla
+        </button>
+    </form>
+</div>

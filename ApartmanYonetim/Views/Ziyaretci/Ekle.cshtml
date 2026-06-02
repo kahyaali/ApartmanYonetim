@@ -1,0 +1,111 @@
+﻿@model ApartmanYonetim.Models.Entities.Ziyaretci
+@{
+    ViewData["Title"] = "Ziyaretçi Ekle";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-user-plus me-2"></i>Ziyaretçi Ekle</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card" style="max-width:600px;">
+    <form asp-action="Ekle" method="post">
+        <div class="row g-3">
+
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">
+                    Ad Soyad *
+                </label>
+                <input name="AdSoyad" value="@Model.AdSoyad"
+                       class="form-control"
+                       placeholder="Ziyaretçi adı soyadı" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Telefon</label>
+                <input name="Telefon" value="@Model.Telefon"
+                       class="form-control"
+                       placeholder="05xx xxx xx xx" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">
+                    Araç Plakası
+                </label>
+                <input name="AracPlaka" value="@Model.AracPlaka"
+                       class="form-control"
+                       placeholder="34ABC123"
+                       style="text-transform:uppercase;
+                letter-spacing:1px;" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">
+                    Beklenen Giriş Saati
+                </label>
+                <input name="BeklenenGirisSaati" type="datetime-local"
+                       value="@Model.BeklenenGirisSaati
+                .ToString(" yyyy-MM-ddTHH:mm")"
+                       class="form-control" />
+            </div>
+
+            <!-- Daire bilgisi -->
+            @if ((bool)(ViewBag.IsAdmin ?? false))
+            {
+                <div class="col-12">
+                    <label class="form-label" style="font-size:13px;">
+                        Ziyaret Edilen Daire
+                    </label>
+                    <select name="ApartmentId" class="form-select">
+                        <option value="">Daire Seçiniz</option>
+                        @if (ViewBag.Daireler != null)
+                        {
+                            @foreach (var d in ViewBag.Daireler)
+                            {
+                                <option value="@d.Id">@d.Tanim</option>
+                            }
+                        }
+                    </select>
+                </div>
+            }
+            else
+            {
+                <!-- Sakin: kendi dairesi otomatik -->
+                <input type="hidden" name="ApartmentId"
+                       value="@Model.ApartmentId" />
+                <div class="col-12">
+                    <label class="form-label" style="font-size:13px;">
+                        Ziyaret Edilen Daire
+                    </label>
+                    <div style="background:#f8fafc;border-radius:10px;
+                        padding:10px 16px;font-size:13px;
+                        color:#4a5568;border:1px solid #e2e8f0;">
+                        <i class="fas fa-building me-2"
+                           style="color:#2d6a9f;"></i>
+                        @ViewBag.DaireBilgisi
+                        <span style="font-size:11px;color:#a0aec0;
+                        margin-left:8px;">(kendi daireniz)</span>
+                    </div>
+                </div>
+            }
+
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    Açıklama
+                </label>
+                <input name="Aciklama" value="@Model.Aciklama"
+                       class="form-control"
+                       placeholder="Ziyaret sebebi (opsiyonel)" />
+            </div>
+
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-save me-2"></i>Kaydet
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

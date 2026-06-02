@@ -1,0 +1,207 @@
+﻿@model ApartmanYonetim.Models.ViewModels.DemirbasViewModel
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Demirbaş Düzenle";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-edit me-2"></i>Demirbaş Düzenle</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger mb-3" style="font-size:13px;">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div><i class="fas fa-exclamation-circle me-1"></i>@error.ErrorMessage</div>
+        }
+    </div>
+}
+
+<div class="form-card" style="max-width:700px;">
+    <form asp-action="Edit" method="post"
+          enctype="multipart/form-data" novalidate>
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <div class="row g-3">
+
+            <div class="col-md-8">
+                <label class="form-label" style="font-size:13px;">Ad *</label>
+                <input name="Ad" value="@Model.Ad" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Kategori</label>
+                <select name="Kategori" class="form-select">
+                    @foreach (DemirbasKategori k in Enum.GetValues(typeof(DemirbasKategori)))
+                    {
+                        <option value="@((int)k)"
+                                selected="@(Model.Kategori == k)">@k</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Marka</label>
+                <input name="Marka" value="@Model.Marka" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Model</label>
+                <input name="Model" value="@Model.Model" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Seri No</label>
+                <input name="SeriNo" value="@Model.SeriNo" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Konum</label>
+                <input name="Konum" value="@Model.Konum" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Alım Tarihi</label>
+                <input name="AlimTarihi" type="date"
+                       value="@Model.AlimTarihi?.ToString("yyyy-MM-dd")"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Fiyat (₺)</label>
+                <input name="Fiyat"
+                       type="number"
+                       step="0.01"
+                       value="@(Model.Fiyat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                       class="form-control" />
+            </div>
+
+
+
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Durum</label>
+                <select name="Durum" class="form-select">
+                    @foreach (DemirbasDurum d in Enum.GetValues(typeof(DemirbasDurum)))
+                    {
+                        <option value="@((int)d)"
+                                selected="@(Model.Durum == d)">@d</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Açıklama</label>
+                <textarea name="Aciklama" class="form-control"
+                          rows="3">@Model.Aciklama</textarea>
+            </div>
+
+            <!-- Mevcut Resimler -->
+            @if (ViewBag.MevcutResimler != null)
+            {
+                var resimler = ViewBag.MevcutResimler
+                    as List<ApartmanYonetim.Models.Entities.DemirbasResim>;
+                @if (resimler != null && resimler.Any())
+                {
+                    <div class="col-12">
+                        <label class="form-label" style="font-size:13px;">
+                            Mevcut Resimler
+                        </label>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var r in resimler)
+                            {
+                                <div id="resim_@r.Id" style="position:relative;">
+                                    <img src="@r.ResimYolu"
+                                         style="width:80px;height:80px;
+                                    object-fit:cover;border-radius:8px;
+                                    border:2px solid #e2e8f0;" />
+                                    <button type="button"
+                                            onclick="resimSilAsync(@r.Id)"
+                                            style="position:absolute;top:-6px;right:-6px;
+                                        background:#e74c3c;color:#fff;border:none;
+                                        border-radius:50%;width:20px;height:20px;
+                                        font-size:11px;cursor:pointer;">
+                                        ×
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+
+            <!-- Yeni Resim Ekle -->
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    Yeni Resim Ekle (Opsiyonel)
+                </label>
+                <div id="dropZone"
+                     style="border:2px dashed #e2e8f0;border-radius:12px;
+                    padding:20px;text-align:center;cursor:pointer;
+                    background:#fafafa;"
+                     onclick="document.getElementById('resimInput').click()">
+                    <i class="fas fa-cloud-upload-alt"
+                       style="font-size:24px;color:#a0aec0;display:block;
+                    margin-bottom:6px;"></i>
+                    <div style="font-size:13px;color:#718096;">
+                        Resim eklemek için tıklayın
+                    </div>
+                </div>
+                <input type="file" id="resimInput" name="Resimler"
+                       multiple accept=".jpg,.jpeg,.png,.webp"
+                       style="display:none;"
+                       onchange="previewResimler(this)" />
+                <div id="resimPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+            </div>
+
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-save me-2"></i>Güncelle
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function previewResimler(input) {
+            const preview = document.getElementById('resimPreview');
+            preview.innerHTML = '';
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const div = document.createElement('div');
+                    div.innerHTML = `<img src="${e.target.result}"
+                        style="width:70px;height:70px;object-fit:cover;
+                               border-radius:8px;border:2px solid #27ae60;" />`;
+                    preview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function resimSilAsync(resimId) {
+            // Alert yerine güzel modal
+            const onay = await showConfirm('Bu resmi silmek istediğinize emin misiniz?');
+            if (!onay) return;
+
+            try {
+                const res = await fetch(`/Demirbase/ResimSilAsync/${resimId}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById(`resim_${resimId}`)?.remove();
+                    if (typeof showNotification === 'function')
+                        showNotification('Resim silindi.', 'success');
+                }
+            } catch(e) {
+                console.warn('Resim silme hatası:', e);
+            }
+        }
+    </script>
+}

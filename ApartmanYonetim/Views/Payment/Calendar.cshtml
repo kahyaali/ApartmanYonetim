@@ -1,0 +1,135 @@
+﻿@{
+    ViewData["Title"] = "Ödeme Takvimi";
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-calendar-alt me-2"></i>Ödeme Takvimi</h4>
+   
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-list me-1"></i>Liste Görünümü
+    </a>
+</div>
+
+<!-- Renk açıklaması -->
+<div class="table-card mb-3">
+    <div class="d-flex flex-wrap gap-3 align-items-center">
+        <span style="font-size:12px;font-weight:600;color:#1e3a5f;">Renk:</span>
+        <span class="d-flex align-items-center gap-1" style="font-size:12px;">
+            <span style="width:12px;height:12px;background:#27ae60;
+            border-radius:50%;display:inline-block;"></span> Ödendi
+        </span>
+        <span class="d-flex align-items-center gap-1" style="font-size:12px;">
+            <span style="width:12px;height:12px;background:#2d6a9f;
+            border-radius:50%;display:inline-block;"></span> Bekliyor
+        </span>
+        <span class="d-flex align-items-center gap-1" style="font-size:12px;">
+            <span style="width:12px;height:12px;background:#f39c12;
+            border-radius:50%;display:inline-block;"></span> 5 Güne Girdi
+        </span>
+        <span class="d-flex align-items-center gap-1" style="font-size:12px;">
+            <span style="width:12px;height:12px;background:#e74c3c;
+            border-radius:50%;display:inline-block;"></span> Acil / Gecikmiş
+        </span>
+    </div>
+</div>
+
+<div class="table-card">
+    <div id="calendar"></div>
+</div>
+
+<!-- Detay Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="border-bottom:1px solid #f0f2f5;">
+                <h6 class="modal-title" id="modalTitle"
+                    style="font-weight:600;color:#1e3a5f;"></h6>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="font-size:13px;">
+                <div id="modalContent"></div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #f0f2f5;">
+                <a id="modalDetailLink" href="#"
+                       class="btn btn-sm"
+                       style="background:#1e3a5f;color:#fff;border-radius:8px;">
+                    Detay
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css"
+          rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/tr.global.min.js">
+    </script>
+
+    <script>
+        const events = @Html.Raw(ViewBag.Events);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const cal = new FullCalendar.Calendar(
+                document.getElementById('calendar'), {
+                locale: 'tr',
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listMonth'
+                },
+                events: events,
+                eventClick: function(info) {
+                    const e = info.event;
+                    const p = e.extendedProps;
+
+                    document.getElementById('modalTitle').textContent = e.title;
+                    document.getElementById('modalContent').innerHTML = `
+                        <div class="mb-2">
+                            <span style="color:#718096;">Toplam:</span>
+                            <strong> ${p.tutar} ₺</strong>
+                        </div>
+                        <div class="mb-2">
+                            <span style="color:#718096;">Kalan:</span>
+                            <strong style="color:${p.odendi ? '#27ae60' : '#e74c3c'};">
+                                ${p.kalan} ₺
+                            </strong>
+                        </div>
+                        <div>
+                            <span style="color:#718096;">Son Tarih:</span>
+                            <strong> ${e.startStr}</strong>
+                        </div>
+                    `;
+                    document.getElementById('modalDetailLink').href =
+                        '/Payment/Detail/' + e.id;
+
+                    new bootstrap.Modal(
+                        document.getElementById('eventModal')).show();
+                },
+                eventContent: function(arg) {
+                    return {
+                        html: `<div style="padding:2px 6px;font-size:11px;
+                                           white-space:nowrap;overflow:hidden;
+                                           text-overflow:ellipsis;">
+                                ${arg.event.title}
+                               </div>`
+                    };
+                }
+            });
+            cal.render();
+        });
+    </script>
+}

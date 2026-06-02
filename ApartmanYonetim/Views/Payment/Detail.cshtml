@@ -1,0 +1,235 @@
+﻿@model ApartmanYonetim.Models.ViewModels.PaymentDetailViewModel
+@{
+    ViewData["Title"] = "Ödeme Detayı";
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4>
+        <i class="fas fa-file-invoice-dollar me-2"></i>
+        @Model.BlokAdi — Daire @Model.DaireNo — @Model.Aciklama
+    </h4>
+    <div class="d-flex gap-2">
+        @if (!Model.Odendi && User.IsInRole("Admin"))
+        {
+           
+            <a asp-action="AddTransaction" asp-route-id="@Model.Id"
+                   class="btn btn-sm"
+                   style="background:#27ae60;color:#fff;border-radius:8px;">
+                <i class="fas fa-plus me-1"></i>Ödeme Ekle
+            </a>
+            <a asp-controller="Pdf" asp-action="Makbuz" asp-route-id="@Model.Id"
+                   class="btn btn-sm"
+                   style="background:#e74c3c;color:#fff;border-radius:8px;"
+                   target="_blank">
+                <i class="fas fa-file-pdf me-1"></i>PDF Makbuz
+            </a>
+            @if (!Model.Odendi && Model.KalanTutar > 0 && !User.IsInRole("Admin"))
+            {
+                <a asp-controller="Odeme" asp-action="Odeme"
+                       asp-route-paymentId="@Model.Id"
+                       class="btn btn-sm"
+                       style="background:#27ae60;color:#fff;border-radius:8px;">
+                    <i class="fas fa-credit-card me-1"></i>Online Öde
+                </a>
+            }
+        }
+        @if (User.IsInRole("Admin"))
+        {
+            <!-- Admin geri -->
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Geri
+            </a>
+        }
+        else
+        {
+            <!-- Sakin geri -->
+            <a asp-action="MyPayments" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Geri
+            </a>
+        }
+    </div>
+</div>
+
+<!-- Borç Özeti -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                letter-spacing:1px;margin-bottom:6px;">
+                Toplam Borç
+            </div>
+            <div class="stat-number" style="font-size:22px;">
+                @Model.Tutar.ToString("N2") ₺
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                letter-spacing:1px;margin-bottom:6px;">
+                Ödenen
+            </div>
+            <div class="stat-number" style="font-size:22px;color:#27ae60;">
+                @Model.OdenenTutar.ToString("N2") ₺
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card @Model.RowClass">
+            <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                letter-spacing:1px;margin-bottom:6px;">
+                Kalan Borç
+            </div>
+            <div class="stat-number" style="font-size:22px;color:#e74c3c;">
+                @Model.KalanTutar.ToString("N2") ₺
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                letter-spacing:1px;margin-bottom:6px;">
+                Son Ödeme Tarihi
+            </div>
+            <div style="font-size:16px;font-weight:700;color:#1e3a5f;">
+                @Model.SonOdemeTarihi.ToString("dd.MM.yyyy")
+            </div>
+            <div style="font-size:12px;margin-top:4px;">
+                <span class="badge @(Model.Odendi ? "bg-success" : "bg-secondary")"
+                      style="font-size:11px;">@Model.Durum</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- İlerleme Barı -->
+@{
+    var oran = Model.Tutar > 0
+        ? (int)(Model.OdenenTutar / Model.Tutar * 100)
+        : 0;
+    oran = Math.Min(oran, 100);
+}
+<div class="table-card mb-4">
+    <div class="d-flex justify-content-between mb-2" style="font-size:13px;">
+        <span style="font-weight:600;color:#1e3a5f;">Ödeme İlerlemesi</span>
+        <span style="color:#718096;">%@oran</span>
+    </div>
+    <div style="background:#e2e8f0;border-radius:20px;height:12px;">
+        <div style="width:@oran%;background:@(oran == 100 ? "#27ae60" : "#2d6a9f");
+            border-radius:20px;height:12px;transition:width 0.5s;">
+        </div>
+    </div>
+</div>
+
+<!-- Ödeme Hareketleri -->
+<div class="table-card">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="mb-0 fw-600" style="color:#1e3a5f;">
+            <i class="fas fa-history me-2"></i>Ödeme Hareketleri
+        </h6>
+        <span style="font-size:12px;color:#718096;">
+            @Model.Transactions.Count adet hareket
+        </span>
+    </div>
+
+    @if (!Model.Transactions.Any())
+    {
+        <div class="text-center py-4 text-muted" style="font-size:13px;">
+            <i class="fas fa-inbox me-2"></i>Henüz ödeme yapılmamış.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" style="font-size:13px;">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        <th>#</th>
+                        <th>Ödeme Tarihi</th>
+                        <th>Tutar</th>
+                        <th>Ödeyen</th>
+                        <th>Not</th>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <th>İşlem</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int sira = 1;
+                        decimal kumulatif = 0;
+                    }
+                    @foreach (var t in Model.Transactions)
+                    {
+                        kumulatif += t.OdenenTutar;
+                        <tr style="background:#f0fff4;">
+                            <td>
+                                <span class="badge"
+                                      style="background:#eafaf1;color:#27ae60;font-size:11px;">
+                                    @sira
+                                </span>
+                            </td>
+                            <td>
+                                <div style="font-weight:600;">
+                                    @t.OdemeTarihi.ToString("dd MMMM yyyy",
+                                        new System.Globalization.CultureInfo("tr-TR"))
+                                </div>
+                                <div style="font-size:11px;color:#718096;">
+                                    @t.OdemeTarihi.ToString("HH:mm")
+                                </div>
+                            </td>
+                            <td>
+                                <strong style="color:#27ae60;font-size:14px;">
+                                    +@t.OdenenTutar.ToString("N2") ₺
+                                </strong>
+                                <div style="font-size:11px;color:#718096;">
+                                    Toplam: @kumulatif.ToString("N2") ₺
+                                </div>
+                            </td>
+                            <td>@(t.OdeyenKisi ?? "-")</td>
+                            <td style="color:#718096;">@(t.Aciklama ?? "-")</td>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <td>
+                                    <form asp-action="DeleteTransaction"
+                                          asp-route-id="@t.Id"
+                                          method="post" class="d-inline"
+                                          onsubmit="return confirm('Bu ödeme hareketini silmek istediğinize emin misiniz?')">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                style="font-size:11px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+                        sira++;
+                    }
+                </tbody>
+                <tfoot>
+                    <tr style="background:#f8fafc;">
+                        <td colspan="2" style="font-weight:600;text-align:right;
+                            font-size:13px;">
+                            Toplam Ödenen:
+                        </td>
+                        <td style="font-weight:700;color:#27ae60;font-size:14px;">
+                            @Model.OdenenTutar.ToString("N2") ₺
+                        </td>
+                        <td colspan="@(User.IsInRole("Admin") ? 3 : 2)"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+</div>

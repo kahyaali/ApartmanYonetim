@@ -1,0 +1,64 @@
+﻿@model ApartmanYonetim.Models.ViewModels.TicketCreateViewModel
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Yeni Talep";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-plus me-2"></i>Yeni Arıza / Talep</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card" style="max-width:640px;">
+    <form asp-action="Create" method="post">
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Başlık</label>
+                <input asp-for="Baslik" class="form-control"
+                       placeholder="Kısa ve açıklayıcı bir başlık..." />
+                <span asp-validation-for="Baslik" class="text-danger"
+                      style="font-size:12px;"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Kategori</label>
+                <select asp-for="Kategori" class="form-select">
+                    <option value="">Seçiniz</option>
+                    <option value="Elektrik">Elektrik</option>
+                    <option value="Su / Tesisat">Su / Tesisat</option>
+                    <option value="Asansör">Asansör</option>
+                    <option value="Isıtma">Isıtma</option>
+                    <option value="Temizlik">Temizlik</option>
+                    <option value="Güvenlik">Güvenlik</option>
+                    <option value="Bahçe">Bahçe</option>
+                    <option value="Diğer">Diğer</option>
+                </select>
+                <span asp-validation-for="Kategori" class="text-danger"
+                      style="font-size:12px;"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Öncelik</label>
+                <select asp-for="Oncelik" class="form-select">
+                    <option value="@((int)TicketOncelik.Dusuk)">Düşük</option>
+                    <option value="@((int)TicketOncelik.Normal)" selected>Normal</option>
+                    <option value="@((int)TicketOncelik.Yuksek)">Yüksek</option>
+                    <option value="@((int)TicketOncelik.Acil)">Acil</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Açıklama</label>
+                <textarea asp-for="Aciklama" class="form-control" rows="5"
+                          placeholder="Sorunu detaylı açıklayın..."></textarea>
+                <span asp-validation-for="Aciklama" class="text-danger"
+                      style="font-size:12px;"></span>
+            </div>
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-paper-plane me-2"></i>Talebi Gönder
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

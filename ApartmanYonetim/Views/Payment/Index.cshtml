@@ -1,0 +1,233 @@
+﻿@model List<ApartmanYonetim.Models.ViewModels.PaymentListViewModel>
+@{
+    ViewData["Title"] = "Ödemeler";
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-money-bill-wave me-2"></i>Ödemeler</h4>
+    <div class="d-flex gap-2">
+       
+        <button onclick="togglePin('Ödemeler', '/Payment/Index', 'fa-money-bill-wave', this)"
+                style="background:none;border:none;cursor:pointer;
+            font-size:16px;padding:4px 8px;"
+                title="Favorilere Ekle">
+            <i class="fas fa-thumbtack" style="color:#a0aec0;"></i>
+        </button>
+        <a asp-controller="Export" asp-action="Payments"
+               class="btn btn-sm"
+               style="background:#27ae60;color:#fff;border-radius:8px;">
+            <i class="fas fa-file-excel me-1"></i>Excel
+        </a>
+        <a asp-controller="Payment" asp-action="Create"
+               class="btn btn-sm"
+               style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-plus me-1"></i>Yeni Ödeme Kaydı
+        </a>
+    </div>
+    <button onclick="window.print()"
+            class="btn btn-sm btn-outline-secondary no-print">
+        <i class="fas fa-print me-1"></i>Yazdır
+    </button>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#eafaf1;">
+                    <i class="fas fa-check-circle" style="color:#27ae60;"></i>
+                </div>
+                <div>
+                    <div class="stat-number" style="font-size:20px;">@ViewBag.ToplamTahsilat.ToString("N0") ₺</div>
+                    <div class="stat-label">Toplam Tahsilat</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fdf2f2;">
+                    <i class="fas fa-exclamation-circle" style="color:#e74c3c;"></i>
+                </div>
+                <div>
+                    <div class="stat-number" style="font-size:20px;">@ViewBag.ToplamBorc.ToString("N0") ₺</div>
+                    <div class="stat-label">Bekleyen Borç</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#eafaf1;">
+                    <i class="fas fa-thumbs-up" style="color:#27ae60;"></i>
+                </div>
+                <div>
+                    <div class="stat-number" style="font-size:20px;">@ViewBag.OdenenSayi</div>
+                    <div class="stat-label">Tamamlanan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fdf6ec;">
+                    <i class="fas fa-clock" style="color:#e67e22;"></i>
+                </div>
+                <div>
+                    <div class="stat-number" style="font-size:20px;">@ViewBag.OdenmeyenSayi</div>
+                    <div class="stat-label">Bekleyen</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3" style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card mb-3">
+    <div class="d-flex flex-wrap gap-3 align-items-center">
+        <span style="font-size:12px;font-weight:600;color:#1e3a5f;">Renk:</span>
+        <span class="d-flex align-items-center gap-1" style="font-size:12px;">
+            <span style="width:12px;height:12px;background:#d4edda;border-radius:3px;display:inline-block;"></span> Ödendi
+        </span>
+        <span class="d-flex align-items-center gap-1" style="font-size:12px;">
+            <span style="width:12px;height:12px;background:#fde8cc;border-radius:3px;display:inline-block;"></span> Bekliyor
+        </span>
+        <span class="d-flex align-items-center gap-1" style="font-size:12px;">
+            <span style="width:12px;height:12px;background:#fff9c4;border-radius:3px;display:inline-block;"></span> 5 Güne Girdi
+        </span>
+        <span class="d-flex align-items-center gap-1" style="font-size:12px;">
+            <span style="width:12px;height:12px;background:#ffd6d6;border-radius:3px;display:inline-block;"></span> 3 Gün / Gecikmiş
+        </span>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblOdemeler" class="table table-hover align-middle" style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Blok / Daire</th>
+                    <th>Açıklama</th>
+                    <th>Toplam</th>
+                    <th>Ödenen</th>
+                    <th>Kalan</th>
+                    <th>Son Tarih</th>
+                    <th>Hareketler</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr class="@p.RowClass">
+                        <td>
+                            <div style="font-weight:600;">Daire @p.DaireNo</div>
+                            @if (!string.IsNullOrEmpty(p.BlokAdi))
+                            {
+                                <div style="font-size:11px;color:#718096;">@p.BlokAdi</div>
+                            }
+                        </td>
+                        <td>@p.Aciklama</td>
+                        <td>@p.Tutar.ToString("N2") ₺</td>
+                        <td style="color:#27ae60;font-weight:500;">@p.OdenenTutar.ToString("N2") ₺</td>
+                        <td>
+                            @if (p.Kalan > 0)
+                            {
+                                <strong style="color:#e74c3c;">@p.Kalan.ToString("N2") ₺</strong>
+                            }
+                            else
+                            {
+                                <span style="color:#27ae60;">—</span>
+                            }
+                        </td>
+                        <td>@p.SonOdemeTarihi.ToString("dd.MM.yyyy")</td>
+                        <td>
+                            <span class="badge" style="background:#e8f4fd;color:#2d6a9f;font-size:11px;">
+                                @p.TransactionSayisi hareket
+                            </span>
+                        </td>
+                        <td><span class="@p.DurumClass" style="font-size:11px;">@p.Durum</span></td>
+                        <td>
+                            <a asp-action="Detail" asp-route-id="@p.Id"
+                                   class="btn btn-sm btn-outline-primary" style="font-size:11px;" title="Detay">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            @if (!p.Odendi)
+                            {
+                                <a asp-action="AddTransaction" asp-route-id="@p.Id"
+                                       class="btn btn-sm btn-outline-success" style="font-size:11px;" title="Ödeme Ekle">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            }
+                            <a asp-action="Edit" asp-route-id="@p.Id"
+                                   class="btn btn-sm btn-outline-secondary" style="font-size:11px;" title="Düzenle">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline">
+                                <button type="button" 
+                                        onclick="odemeSil(@p.Id, '@p.Tutar')"
+                                    class="btn btn-sm btn-outline-danger" style="font-size:11px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tblOdemeler').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' },
+                pageLength: 15,
+                order: [[5, 'asc']]
+            });
+        });
+
+         // Ödeme silme onayı
+         function odemeSil(id, ad) {
+            showConfirm(`"${ad}" Tutarı silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (!onay) return;
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/Payment/Delete/${id}`;
+                    const token = document.querySelector(
+                        'input[name="__RequestVerificationToken"]')?.value;
+                    if (token) {
+                        const inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = '__RequestVerificationToken';
+                        inp.value = token;
+                        form.appendChild(inp);
+                    }
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+        }
+    </script>
+}

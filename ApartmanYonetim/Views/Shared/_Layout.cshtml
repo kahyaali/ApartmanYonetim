@@ -1,0 +1,762 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Apartman Yönetimi</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <style>
+        @@keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @@keyframes slideOut {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+@if (User.Identity!.IsAuthenticated)
+{
+     string? kullaniciFoto = null;
+    if (User.Identity?.IsAuthenticated == true)
+    {
+            var userManager = Context.RequestServices
+            .GetService<Microsoft.AspNetCore.Identity.UserManager<ApartmanYonetim.Models.Entities.AppUser>>();
+
+              if (userManager != null)
+              {
+                   var currentUser = await userManager.GetUserAsync(User);
+                     kullaniciFoto = currentUser?.ProfilFoto;
+              }
+    }
+
+
+    <div class="wrapper">
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <div class="building-img-wrapper">
+                    <img src="~/images/bina.png"
+                         alt="Apartman"
+                         class="building-img"
+                         onerror="this.onerror=null;this.src='https://placehold.co/280x160/1e3a5f/ffffff?text=Apartman';" />
+                </div>
+                <h5 class="sidebar-title">Apartman Yönetimi</h5>
+                <p class="sidebar-subtitle">Hoş geldiniz</p>
+            </div>
+
+            <div class="sidebar-user">
+               @*  <div class="user-avatar">
+                  @{
+                      var currentUser = ViewBag.CurrentUserPhoto as string;
+                    }
+                           @if (!string.IsNullOrEmpty(currentUser))
+                           {
+                              <img src="@currentUser"
+                               style="width:36px;height:36px;border-radius:50%;
+                               object-fit:cover;" />
+                           }
+                          else
+                          {
+                             <i class="fas fa-user-circle"></i>
+                          }
+                </div> *@
+
+                <div class="user-avatar">
+                     @if (!string.IsNullOrEmpty(kullaniciFoto))
+                     {
+                         <img src="@kullaniciFoto"
+                              style="width:36px;height:36px;border-radius:50%;
+                                     object-fit:cover;border:2px solid rgba(255,255,255,0.3);" />
+                     }
+                     else
+                     {
+                         <i class="fas fa-user-circle"></i>
+                     }
+                </div>
+
+                <div class="user-info">
+                    <span class="user-name">@User.Identity.Name</span>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <span class="user-role admin-badge">Admin</span>
+                    }
+                    else
+                    {
+                        <span class="user-role sakin-badge">Sakin</span>
+                    }
+                </div>
+            </div>
+
+            <hr class="sidebar-divider" />
+            <div id="favoriPinler" style="padding:8px 10px;"></div>
+            <hr class="sidebar-divider" id="favoriDivider" style="display:none;" />
+
+            <ul class="sidebar-nav">
+                <li class="nav-item-label">GENEL</li>
+                <li>
+                    <a asp-controller="Home" asp-action="Index"
+                       class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                        <i class="fas fa-home"></i><span>Ana Sayfa</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Announcement" asp-action="Index"
+                       class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Announcement" ? "active" : "")">
+                        <i class="fas fa-bullhorn"></i><span>Duyurular</span>
+                    </a>
+                </li>
+
+                @if (User.IsInRole("Admin"))
+                {
+                  @if (User.IsInRole("SuperAdmin"))
+{
+    <li>
+        <a asp-controller="SuperAdmin" asp-action="Yoneticiler"
+           class="sidebar-link @(ViewContext.RouteData.Values["controller"]
+               ?.ToString() == "SuperAdmin" &&
+               ViewContext.RouteData.Values["action"]
+               ?.ToString() == "Yoneticiler" ? "active" : "")"
+           style="color:#f39c12;">
+            <i class="fas fa-user-shield" style="color:#f39c12;"></i>
+            <span>Yöneticiler</span>
+        </a>
+    </li>
+    <li>
+        <a asp-controller="SuperAdmin" asp-action="TumKullanicilar"
+           class="sidebar-link @(ViewContext.RouteData.Values["action"]
+               ?.ToString() == "TumKullanicilar" ? "active" : "")"
+           style="color:#f39c12;">
+            <i class="fas fa-users" style="color:#f39c12;"></i>
+            <span>Tüm Kullanıcılar</span>
+        </a>
+    </li>
+}
+                  
+                    <li class="nav-item-label">YÖNETİM</li>
+                    <li>
+                        <a asp-controller="Admin" asp-action="Residents"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Residents" ? "active" : "")">
+                            <i class="fas fa-users"></i><span>Sakinler</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Admin" asp-action="Apartments"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Apartments" ? "active" : "")">
+                            <i class="fas fa-building"></i><span>Daireler</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Block" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Block" ? "active" : "")">
+                            <i class="fas fa-th-large"></i><span>Bloklar</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Admin" asp-action="Users"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Users" ? "active" : "")">
+                            <i class="fas fa-user-cog"></i><span>Kullanıcılar</span>
+                        </a>
+                    </li>
+                    <li>
+                         <a asp-controller="YoneticiBlock" asp-action="Index"
+                          class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "YoneticiBlock" ? "active" : "")">
+                         <i class="fas fa-user-shield"></i>
+                         <span>Blok Atamaları</span>
+                        </a>
+                        </li>
+                    <li>
+                            <a asp-controller="Demirbas" asp-action="Index"
+                            class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Demirbas" ? "active" : "")">
+                           <i class="fas fa-archive"></i>
+                           <span>Demirbaşlar</span>
+                          </a>
+                    </li>
+
+                    <li class="nav-item-label">FİNANS</li>
+                    <li>
+                        <a asp-controller="Aidat" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Aidat" ? "active" : "")">
+                            <i class="fas fa-file-invoice-dollar"></i><span>Aidat Tanımları</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Payment" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Payment" && ViewContext.RouteData.Values["action"]?.ToString() != "Calendar" ? "active" : "")">
+                            <i class="fas fa-money-bill-wave"></i><span>Gelir / Ödemeler</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Payment" asp-action="Calendar"
+                           class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Calendar" ? "active" : "")">
+                            <i class="fas fa-calendar-alt"></i><span>Ödeme Takvimi</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Expense" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Expense" ? "active" : "")">
+                            <i class="fas fa-receipt"></i><span>Giderler</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item-label">DESTEK</li>
+                    <li>
+                        <a asp-controller="Ticket" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Ticket" ? "active" : "")">
+                            <i class="fas fa-tools"></i><span>Arıza & Talepler</span>
+                        </a>
+                    </li>
+                    <li>
+                            <a asp-controller="Kargo" asp-action="Index"
+                            class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Kargo" ? "active" : "")">
+                            <i class="fas fa-box"></i>
+                           <span>Kargo & Paket</span>
+                           </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Vehicle" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vehicle" ? "active" : "")">
+                            <i class="fas fa-car"></i><span>Araç & Otopark</span>
+                        </a>
+                    </li>
+                    <li>
+                       <a asp-controller="Ziyaretci" asp-action="Index"
+                        class="sidebar-link @(ViewContext.RouteData.Values["controller"]
+                          ?.ToString() == "Ziyaretci" ? "active" : "")">
+                         <i class="fas fa-user-friends"></i>
+                       <span>Ziyaretçiler</span>
+                         </a>
+                         </li>
+                    <li>
+                            <a asp-controller="Bakim" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]
+                                 ?.ToString() == "Bakim" ? "active" : "")">
+                               <i class="fas fa-tools"></i>
+                                 <span>Bakım Takvimi</span>
+                          </a>
+                        </li>
+                         <li>
+                             <a asp-controller="Bildirim" asp-action="Gonder"
+                                class="sidebar-link @(ViewContext.RouteData.Values["controller"]
+                                    ?.ToString() == "Bildirim" ? "active" : "")">
+                                 <i class="fas fa-bell"></i>
+                                 <span>Toplu Bildirim</span>
+                             </a>
+                         </li>
+                    <li>
+                       <a asp-controller="Mesaj" asp-action="Index"
+                          class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Mesaj" ? "active" : "")"
+                         id="mesajLink">
+                        <i class="fas fa-comments"></i>
+                        <span>Mesajlar</span>
+                        <span id="mesajBadge"
+                        style="display:none;background:#e74c3c;color:#fff;
+                         border-radius:50%;width:18px;height:18px;
+                         font-size:10px;font-weight:700;margin-left:auto;
+                        align-items:center;justify-content:center;">
+                        </span>
+                          </a>
+                       </li>
+                        
+                         <li>
+                             <a asp-controller="Toplanti" asp-action="Index"
+                                class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Toplanti" ? "active" : "")">
+                                 <i class="fas fa-calendar-check"></i>
+                                 <span>Toplantılar</span>
+                             </a>
+                         </li>
+                         <li>
+                             <a asp-controller="Anket" asp-action="Index"
+                                class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Anket" ? "active" : "")">
+                                 <i class="fas fa-poll"></i>
+                                 <span>Anketler</span>
+                             </a>
+                         </li>
+                         <li>
+                             <a asp-controller="Belge" asp-action="Index"
+                                class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Belge" ? "active" : "")">
+                                 <i class="fas fa-folder-open"></i>
+                                 <span>Belgeler</span>
+                             </a>
+                         </li>
+                         
+                    <li class="nav-item-label">SİSTEM</li>
+                    <li>
+                        <a asp-controller="Audit" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Audit" ? "active" : "")">
+                            <i class="fas fa-history"></i><span>Sistem Logları</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item-label">RAPORLAR</li>
+                    <li>
+                        <a asp-controller="Export" asp-action="Residents" class="sidebar-link">
+                            <i class="fas fa-file-excel"></i><span>Sakinler Excel</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Export" asp-action="Payments" class="sidebar-link">
+                            <i class="fas fa-file-excel"></i><span>Ödemeler Excel</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Export" asp-action="Expenses" class="sidebar-link">
+                            <i class="fas fa-file-excel"></i><span>Giderler Excel</span>
+                        </a>
+                    </li>
+                    <li>
+                     <a asp-controller="Butce" asp-action="Index"
+                        class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Butce" ? "active" : "")">
+                         <i class="fas fa-chart-pie"></i>
+                         <span>Bütçe Planlaması</span>
+                     </a>
+                     </li>
+                }
+                else
+                {
+                    <li class="nav-item-label">HESABIM</li>
+                    <li>
+                        <a asp-controller="Payment" asp-action="MyPayments"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Payment" && ViewContext.RouteData.Values["action"]?.ToString() == "MyPayments" ? "active" : "")">
+                            <i class="fas fa-money-bill-wave"></i><span>Ödemelerim</span>
+                        </a>
+                    </li>
+                    <li>
+                         <a asp-controller="Odeme" asp-action="Odeme"
+                            class="sidebar-link"
+                            style="color:#27ae60;">
+                             <i class="fas fa-credit-card" style="color:#27ae60;"></i>
+                             <span>Online Ödeme</span>
+                         </a>
+                     </li>
+                    <li>
+                        <a asp-controller="Payment" asp-action="Calendar"
+                           class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Calendar" ? "active" : "")">
+                            <i class="fas fa-calendar-alt"></i><span>Ödeme Takvimi</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Ticket" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Ticket" ? "active" : "")">
+                            <i class="fas fa-tools"></i><span>Arıza & Talepler</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Vehicle" asp-action="Index"
+                           class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vehicle" ? "active" : "")">
+                            <i class="fas fa-car"></i><span>Araç & Otopark</span>
+                        </a>
+                    </li>
+                    <li>
+                         <a asp-controller="Kargo" asp-action="Index"
+                            class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Kargo" ? "active" : "")">
+                             <i class="fas fa-box"></i>
+                             <span>Kargolarım</span>
+                         </a>
+                    </li>
+                    <li>
+                       <a asp-controller="Ziyaretci" asp-action="Index"
+                        class="sidebar-link @(ViewContext.RouteData.Values["controller"]
+                         ?.ToString() == "Ziyaretci" ? "active" : "")">
+                        <i class="fas fa-user-friends"></i>
+                         <span>Ziyaretçilerim</span>
+                        </a>
+                        </li>
+                      <li>
+                          <a asp-controller="Mesaj" asp-action="Index"
+                             class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Mesaj" ? "active" : "")"
+                             id="mesajLink">
+                              <i class="fas fa-comments"></i>
+                              <span>Mesajlar</span>
+                             <span id="mesajBadge"
+                             style="display:none;background:#e74c3c;color:#fff;
+                                   border-radius:50%;width:18px;height:18px;
+                                   font-size:10px;font-weight:700;margin-left:auto;
+                                   align-items:center;justify-content:center;">
+                            </span>
+                          </a>
+                      </li>
+                      <li>
+                           <a asp-controller="Toplanti" asp-action="Index"
+                              class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Toplanti" ? "active" : "")">
+                               <i class="fas fa-calendar-check"></i>
+                               <span>Toplantılar</span>
+                           </a>
+                       </li>
+                       <li>
+                           <a asp-controller="Anket" asp-action="Index"
+                              class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Anket" ? "active" : "")">
+                               <i class="fas fa-poll"></i>
+                               <span>Anketler</span>
+                           </a>
+                       </li>
+                       <li>
+                           <a asp-controller="Belge" asp-action="Index"
+                              class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Belge" ? "active" : "")">
+                               <i class="fas fa-folder-open"></i>
+                               <span>Belgeler</span>
+                           </a>
+                       </li>
+                }
+
+                <li class="nav-item-label">HESAP</li>
+                <li>
+                    <a asp-controller="Profile" asp-action="Index"
+                       class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profile" ? "active" : "")">
+                        <i class="fas fa-user"></i><span>Profilim</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Auth" asp-action="SignOut" class="sidebar-link signout-link">
+                        <i class="fas fa-sign-out-alt"></i><span>Çıkış Yap</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div id="content">
+            <nav class="top-navbar">
+                <button id="sidebarToggle" class="sidebar-toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div class="top-navbar-right">
+                    <!-- Pin -->
+                    <button id="pinToggleBtn"
+                            onclick="togglePin(document.title.split('—')[0].trim(), window.location.pathname, 'fa-bookmark', this)"
+                            style="background:none;border:none;cursor:pointer;
+                                   font-size:15px;color:#a0aec0;padding:5px 6px;
+                                   border-radius:8px;flex-shrink:0;"
+                            title="Bu sayfayı favorilere ekle">
+                        <i class="fas fa-thumbtack"></i>
+                    </button>
+
+                    <!-- Dark Mode -->
+                    <button id="darkModeToggle"
+                            style="background:none;border:none;cursor:pointer;
+                                   font-size:16px;color:#718096;padding:5px 6px;
+                                   border-radius:8px;flex-shrink:0;"
+                            title="Dark Mode">
+                        <i id="darkModeIcon" class="fas fa-moon"></i>
+                    </button>
+
+                    <!-- Arama -->
+                    <form asp-controller="Search" asp-action="Index" method="get"
+                          style="flex-shrink:0;">
+                        <div style="position:relative;">
+                            <i class="fas fa-search"
+                               style="position:absolute;left:8px;top:50%;
+                                      transform:translateY(-50%);color:#a0aec0;
+                                      font-size:12px;pointer-events:none;"></i>
+                            <input type="text" name="q"
+                                   placeholder="Ara..."
+                                   style="padding:6px 10px 6px 26px;
+                                          border:1px solid #e2e8f0;
+                                          border-radius:20px;font-size:12px;
+                                          width:130px;background:#f8fafc;
+                                          outline:none;transition:width 0.2s;" 
+                                   onfocus="this.style.width='200px';this.style.borderColor='#2d6a9f'"
+                                   onblur="this.style.width='130px';this.style.borderColor='#e2e8f0'" />
+                        </div>
+                    </form>
+
+                    <!-- Tarih — sadece geniş ekranda -->
+                    <span class="d-none d-xl-inline-flex align-items-center"
+                          style="font-size:12px;color:#718096;white-space:nowrap;flex-shrink:0;">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        @DateTime.Now.ToString("dd MMMM yyyy",
+                            new System.Globalization.CultureInfo("tr-TR"))
+                    </span>
+                </div>
+            </nav>
+
+            <main class="main-content">
+                @Html.AntiForgeryToken()
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show mb-3"
+                         style="font-size:13px;border-radius:10px;">
+                        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show mb-3"
+                         style="font-size:13px;border-radius:10px;">
+                        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                } 
+
+                @RenderBody()
+            </main>
+
+            <footer class="main-footer">
+                <span>&copy; @DateTime.Now.Year Apartman Yönetim Sistemi</span>
+            </footer>
+        </div>
+    </div>
+}
+else
+{
+    <main>@RenderBody()</main>
+}
+
+<div id="notificationContainer"
+     style="position:fixed;top:70px;right:20px;z-index:9999;
+            width:320px;pointer-events:none;">
+</div>
+
+<!-- Silme Modal -->
+<div id="confirmModal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+            z-index:99998;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:28px;
+                max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);
+                text-align:center;">
+        <div style="width:56px;height:56px;border-radius:50%;background:#fdf2f2;
+                     display:flex;align-items:center;justify-content:center;
+                     margin:0 auto 16px;">
+            <i class="fas fa-exclamation-triangle"
+               style="color:#e74c3c;font-size:24px;"></i>
+        </div>
+        <h6 style="color:#1e3a5f;font-weight:600;margin-bottom:8px;">
+            Silme Onayı
+        </h6>
+        <p id="confirmMessage"
+           style="font-size:13px;color:#718096;margin-bottom:20px;"></p>
+        <div class="d-flex gap-2 justify-content-center">
+            <button id="confirmCancel"
+                    style="padding:8px 20px;border:1px solid #e2e8f0;
+                           border-radius:8px;background:#fff;cursor:pointer;
+                           font-size:13px;">
+                İptal
+            </button>
+            <button id="confirmOk"
+                    style="padding:8px 20px;background:#e74c3c;color:#fff;
+                           border:none;border-radius:8px;cursor:pointer;
+                           font-size:13px;font-weight:500;">
+                Evet, Sil
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+
+@await RenderSectionAsync("Scripts", required: false)
+
+<script>
+function showNotification(mesaj, tip) {
+    const colors = {
+        success: { bg:'#d4edda', border:'#27ae60', icon:'fa-check-circle',       text:'#155724' },
+        danger:  { bg:'#ffd6d6', border:'#e74c3c', icon:'fa-exclamation-circle',  text:'#721c24' },
+        warning: { bg:'#fff9c4', border:'#f39c12', icon:'fa-exclamation-triangle', text:'#856404' },
+        info:    { bg:'#e8f4fd', border:'#2d6a9f', icon:'fa-info-circle',         text:'#0c5460' }
+    };
+    const c = colors[tip] || colors.info;
+    const id = 'notif_' + Date.now();
+    const div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = `background:${c.bg};border-left:4px solid ${c.border};
+        border-radius:10px;padding:14px 16px;margin-bottom:10px;
+        box-shadow:0 4px 15px rgba(0,0,0,0.12);pointer-events:all;
+        animation:slideIn 0.3s ease;display:flex;align-items:flex-start;gap:10px;`;
+    div.innerHTML = `
+        <i class="fas ${c.icon}" style="color:${c.border};margin-top:2px;font-size:15px;flex-shrink:0;"></i>
+        <div style="flex:1;font-size:13px;color:${c.text};line-height:1.5;">${mesaj}</div>
+        <button onclick="document.getElementById('${id}').remove()"
+                style="background:none;border:none;color:${c.text};
+                       cursor:pointer;font-size:16px;padding:0;line-height:1;">×</button>`;
+    const container = document.getElementById('notificationContainer');
+    if (container) container.appendChild(div);
+    setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) { el.style.animation='slideOut 0.3s ease'; setTimeout(()=>el?.remove(),300); }
+    }, 5000);
+}
+
+async function loadFavoriler() {
+    try {
+        const res = await fetch('/Favori/List');
+        if (!res.ok) return;
+        const data = await res.json();
+        const container = document.getElementById('favoriPinler');
+        const divider = document.getElementById('favoriDivider');
+        if (!container) return;
+
+        const pinBtn = document.getElementById('pinToggleBtn');
+        if (pinBtn) {
+            const pinli = data.some(f => f.url === window.location.pathname);
+            const icon = pinBtn.querySelector('i');
+            if (icon) icon.style.color = pinli ? '#f39c12' : '#a0aec0';
+        }
+
+        if (data.length === 0) {
+            container.innerHTML = '';
+            if (divider) divider.style.display = 'none';
+            return;
+        }
+
+        if (divider) divider.style.display = 'block';
+        container.innerHTML = `
+            <div style="font-size:10px;color:#5a8ab0;font-weight:700;
+                        letter-spacing:1.5px;padding:0 10px 6px;">
+                PİNLENEN SAYFALAR
+            </div>
+            ${data.map(f => `
+                <a href="${f.url}"
+                   style="display:flex;align-items:center;gap:10px;padding:8px 10px;
+                          color:#a8c8e8;text-decoration:none;font-size:13px;
+                          border-radius:8px;transition:background 0.2s;"
+                   onmouseover="this.style.background='rgba(255,255,255,0.08)'"
+                   onmouseout="this.style.background='transparent'">
+                    <i class="fas ${f.ikon}" style="width:18px;text-align:center;font-size:13px;"></i>
+                    <span>${f.baslik}</span>
+                </a>
+            `).join('')}`;
+    } catch(e) { console.warn('Favori yüklenemedi:', e); }
+}
+
+async function togglePin(baslik, url, ikon, btn) {
+    try {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        const res = await fetch('/Favori/Toggle', {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json', 'RequestVerificationToken':token },
+            body: JSON.stringify({ baslik, url, ikon })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const icon = btn.querySelector ? btn.querySelector('i') : btn;
+            if (icon) icon.style.color = data.pinned ? '#f39c12' : '#a0aec0';
+            showNotification(data.mesaj, data.pinned ? 'success' : 'info');
+            loadFavoriler();
+        }
+    } catch(e) { console.warn('Pin hatası:', e); }
+}
+
+function showConfirm(mesaj) {
+    return new Promise(resolve => {
+        const modal = document.getElementById('confirmModal');
+        document.getElementById('confirmMessage').textContent = mesaj;
+        modal.style.display = 'flex';
+
+        const okBtn = document.getElementById('confirmOk');
+        const cancelBtn = document.getElementById('confirmCancel');
+
+        const cleanup = () => {
+            modal.style.display = 'none';
+            okBtn.replaceWith(okBtn.cloneNode(true));
+            cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+        };
+
+        document.getElementById('confirmOk').onclick = () => { cleanup(); resolve(true); };
+        document.getElementById('confirmCancel').onclick = () => { cleanup(); resolve(false); };
+    });
+}
+
+async function mesajSayisiGuncelle() {
+    try {
+        const res = await fetch('/Mesaj/OkunmamisSayi');
+        if (!res.ok) return;
+        const data = await res.json();
+        const badge = document.getElementById('mesajBadge');
+        if (badge) {
+            if (data.sayi > 0) {
+                badge.textContent = data.sayi;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    } catch(e) {}
+}
+
+@if (User.Identity != null && User.Identity.IsAuthenticated)
+{
+    <text>
+    // ── SignalR — global scope'ta tanımla ──
+    let signalRConnection = null;
+
+    function signalRBaslat() {
+        if (typeof signalR === 'undefined') {
+            console.warn('SignalR yüklenemedi.');
+            return;
+        }
+
+        signalRConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/notificationHub")
+            .withAutomaticReconnect()
+            .build();
+
+        // Bildirim dinle
+        signalRConnection.on("ReceiveNotification", function(mesaj, tip) {
+            showNotification(mesaj, tip);
+        });
+
+        // Veri yenileme dinle
+        signalRConnection.on("RefreshData", function(dataType) {
+            if (dataType === "payments") {
+                window.dispatchEvent(new CustomEvent('refreshPayments'));
+            }
+            if (dataType === "announcements") {
+                window.dispatchEvent(new CustomEvent('refreshAnnouncements'));
+            }
+        });
+
+        signalRConnection.start().then(function() {
+            console.log('SignalR bağlandı.');
+
+            @if (User.IsInRole("Admin"))
+            {
+                <text>
+                signalRConnection.invoke("JoinGroup", "admins")
+                    .catch(err => console.warn('Admin grup hatası:', err));
+                </text>
+            }
+
+            var userId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+            if (userId) {
+                signalRConnection.invoke("JoinGroup", "user_" + userId)
+                    .then(() => console.log('Gruba katıldı: user_' + userId))
+                    .catch(err => console.warn('User grup hatası:', err));
+            }
+
+        }).catch(function(err) {
+            console.warn("SignalR bağlantı hatası:", err.toString());
+        });
+    }
+
+    // ── DOMContentLoaded ──
+    document.addEventListener('DOMContentLoaded', function() {
+        loadFavoriler();
+        mesajSayisiGuncelle();
+        setInterval(mesajSayisiGuncelle, 30000);
+        signalRBaslat();
+    });
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        loadFavoriler();
+    }
+    </text>
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,149 @@
+﻿@model ApartmanYonetim.Models.Entities.Ticket
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Talep Detayı";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-tools me-2"></i>Talep #@Model.Id</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="table-card">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+                <h5 style="color:#1e3a5f;font-weight:600;">@Model.Baslik</h5>
+                @{
+                    string durumClass = Model.Durum switch
+                    {
+                        TicketDurum.Bekliyor => "badge bg-warning text-dark",
+                        TicketDurum.Inceleniyor => "badge bg-info text-dark",
+                        TicketDurum.Tamamlandi => "badge bg-success",
+                        TicketDurum.Iptal => "badge bg-secondary",
+                        _ => "badge bg-secondary"
+                    };
+                }
+                <span class="@durumClass">@Model.Durum</span>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+                        <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                            letter-spacing:1px;">
+                            Kategori
+                        </div>
+                        <div style="font-weight:600;margin-top:4px;">@Model.Kategori</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+                        <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                            letter-spacing:1px;">
+                            Öncelik
+                        </div>
+                        <div style="font-weight:600;margin-top:4px;">@Model.Oncelik</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+                        <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                            letter-spacing:1px;">
+                            Daire
+                        </div>
+                        <div style="font-weight:600;margin-top:4px;">
+                            @(Model.Apartment != null
+                                ? $"{Model.Apartment.Block?.Ad} Daire {Model.Apartment.DaireNo}"
+                                : "-")
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-size:13px;color:#4a5568;line-height:1.8;
+                background:#f8fafc;border-radius:10px;padding:16px;">
+                @Model.Aciklama
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.AdminNotu))
+            {
+                <div class="mt-4" style="border-left:4px solid #2d6a9f;
+                    padding:12px 16px;background:#e8f4fd;
+                    border-radius:0 10px 10px 0;">
+                    <div style="font-size:11px;color:#2d6a9f;font-weight:600;
+                        text-transform:uppercase;letter-spacing:1px;
+                        margin-bottom:6px;">
+                        Yönetici Notu
+                    </div>
+                    <div style="font-size:13px;color:#2d3748;">@Model.AdminNotu</div>
+                </div>
+            }
+
+            <div class="mt-4 d-flex gap-3" style="font-size:12px;color:#a0aec0;">
+                <span>
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Oluşturulma: @Model.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")
+                </span>
+                @if (Model.KapanmaTarihi.HasValue)
+                {
+                    <span>
+                        <i class="fas fa-check me-1"></i>
+                        Kapanma: @Model.KapanmaTarihi.Value.ToString("dd.MM.yyyy HH:mm")
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="col-lg-4">
+            <div class="table-card">
+                <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+                    <i class="fas fa-cog me-2"></i>Durum Güncelle
+                </h6>
+                <form asp-action="UpdateStatus" method="post">
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:13px;">Durum</label>
+                        <select name="Durum" class="form-select">
+                            @foreach (TicketDurum d in Enum.GetValues(typeof(TicketDurum)))
+                            {
+                                <option value="@((int)d)"
+                                        selected="@(Model.Durum == d)">
+                                    @d
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:13px;">Öncelik</label>
+                        <select name="Oncelik" class="form-select">
+                            @foreach (TicketOncelik o in Enum.GetValues(typeof(TicketOncelik)))
+                            {
+                                <option value="@((int)o)"
+                                        selected="@(Model.Oncelik == o)">
+                                    @o
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:13px;">
+                            Yönetici Notu
+                        </label>
+                        <textarea name="AdminNotu" class="form-control" rows="4"
+                                  placeholder="Sakin bu notu görecek...">@Model.AdminNotu</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-auth"
+                            style="width:100%;padding:10px;">
+                        <i class="fas fa-save me-2"></i>Güncelle
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+</div>

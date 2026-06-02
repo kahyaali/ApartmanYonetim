@@ -1,0 +1,235 @@
+﻿@model List<ApartmanYonetim.Models.ViewModels.PaymentListViewModel>
+@{
+    ViewData["Title"] = "Ödemelerim";
+}
+
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-money-bill-wave me-2"></i>Ödemelerim</h4>
+ 
+</div>
+
+@if (ViewBag.Mesaj != null)
+{
+    <div class="alert alert-warning" style="font-size:13px;">
+        <i class="fas fa-exclamation-triangle me-2"></i>@ViewBag.Mesaj
+    </div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#eafaf1;">
+                        <i class="fas fa-check-circle" style="color:#27ae60;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number" style="font-size:20px;" id="toplamTahsilat">@ViewBag.ToplamTahsilat.ToString("N0") ₺</div>
+                        <div class="stat-label">Toplam Ödedim</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#fdf2f2;">
+                        <i class="fas fa-exclamation-circle" style="color:#e74c3c;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number" style="font-size:20px;" id="toplamBorc">@ViewBag.ToplamBorc.ToString("N0") ₺</div>
+                        <div class="stat-label">Kalan Borcum</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table id="tblBenim" class="table table-hover align-middle" style="font-size:13px;">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        <th>Açıklama</th>
+                        <th>Toplam</th>
+                        <th>Ödenen</th>
+                        <th>Kalan</th>
+                        <th>Son Tarih</th>
+                        <th>Ödeme Sayısı</th>
+                        <th>Durum</th>
+                        <th>Detay</th>
+                    </tr>
+                </thead>
+                <tbody>                 
+                    @foreach (var p in Model)
+                    {
+                        <tr class="@p.RowClass">
+                            <td>
+                                <div style="font-weight:600;">@p.Aciklama</div>
+                                @if (p.TransactionSayisi > 0)
+                                {
+                                    <div style="font-size:11px;color:#27ae60;">
+                                        <i class="fas fa-check me-1"></i>@p.TransactionSayisi ödeme yapıldı
+                                    </div>
+                                }
+                            </td>
+                            <td>@p.Tutar.ToString("N2") ₺</td>
+                            <td style="color:#27ae60;font-weight:500;">
+                                @p.OdenenTutar.ToString("N2") ₺
+                            </td>
+                            <td>
+                                @if (p.Kalan > 0)
+                                {
+                                    <strong style="color:#e74c3c;">@p.Kalan.ToString("N2") ₺</strong>
+                                }
+                                else
+                                {
+                                    <span style="color:#27ae60;">—</span>
+                                }
+                            </td>
+                            <td>@p.SonOdemeTarihi.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                <span class="badge" style="background:#e8f4fd;color:#2d6a9f;font-size:11px;">
+                                    @p.TransactionSayisi ödeme
+                                </span>
+                            </td>
+                            <td><span class="@p.DurumClass" style="font-size:11px;">@p.Durum</span></td>
+                            <td>
+                                <a asp-action="Detail" asp-route-id="@p.Id"
+                                       class="btn btn-sm btn-outline-primary" style="font-size:11px;">
+                                    <i class="fas fa-eye me-1"></i>Hareketler
+                                </a>
+                                @if (!p.Odendi && p.Kalan > 0)
+                                {
+                                    <a asp-controller="Odeme" asp-action="Odeme"
+                                           asp-route-paymentId="@p.Id"
+                                           class="btn btn-sm btn-outline-success" style="font-size:11px;">
+                                        <i class="fas fa-credit-card me-1"></i>Online Öde
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+
+    @* Tablo satırını oluştur  *@
+    function satirOlustur(p) {
+    return `
+    <tr class="${p.rowClass}" data-id="${p.id}">
+        <td>${p.aciklama}</td>
+        <td>${p.tutar} ₺</td>
+        <td style="color:#27ae60;font-weight:500;">${p.odenenTutar} ₺</td>
+        <td>
+            ${p.kalanTutar > '0,00'
+            ? `<strong style="color:#e74c3c;">${p.kalanTutar} ₺</strong>`
+            : `<span style="color:#27ae60;">—</span>`
+            }
+        </td>
+        <td>${p.sonOdemeTarihi}</td>
+        <td>
+            <span class="badge" style="background:#e8f4fd;color:#2d6a9f;font-size:11px;">
+                ${p.transactionSayisi} ödeme
+            </span>
+        </td>
+        <td><span class="${p.durumClass}" style="font-size:11px;">${p.durum}</span></td>
+        <td>
+            <a href="/Payment/Detail/${p.id}"
+                   class="btn btn-sm btn-outline-primary" style="font-size:11px;">
+                <i class="fas fa-eye me-1"></i>Hareketler
+            </a>
+            ${!p.odendi ? `
+            <a href="/Odeme/Odeme?paymentId=${p.id}"
+                   class="btn btn-sm btn-outline-success" style="font-size:11px;">
+                <i class="fas fa-credit-card me-1"></i>Öde
+            </a>` : ''}
+        </td>
+    </tr>`;
+    }
+
+
+    @*  Veriyi çek ve tabloyu güncelle *@
+    async function odemeVerisiniGuncelle() {
+    try {
+    const res = await fetch('/Payment/GetMyPaymentsJson');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.success) return;
+
+    // İstatistik kartlarını güncelle
+    const tahsilatEl = document.getElementById('toplamTahsilat');
+    const borcEl = document.getElementById('toplamBorc');
+    if (tahsilatEl) tahsilatEl.textContent =
+    parseFloat(data.toplamTahsilat).toLocaleString('tr-TR',
+    {minimumFractionDigits:0}) + ' ₺';
+    if (borcEl) borcEl.textContent =
+    parseFloat(data.toplamBorc).toLocaleString('tr-TR',
+    {minimumFractionDigits:0}) + ' ₺';
+
+    // Tabloyu güncelle
+    const tbody = document.querySelector('#tblBenim tbody');
+    if (!tbody) return;
+
+    data.odemeler.forEach(p => {
+    const mevcutSatir = tbody.querySelector(`tr[data-id="${p.id}"]`);
+    if (mevcutSatir) {
+    // Mevcut satırı güncelle
+    mevcutSatir.outerHTML = satirOlustur(p);
+    } else {
+    // Yeni satır ekle — animasyonlu
+    const yeniSatir = document.createElement('tr');
+    yeniSatir.outerHTML = satirOlustur(p);
+    tbody.insertAdjacentHTML('afterbegin', satirOlustur(p));
+
+    // Yeni satırı vurgula
+    const eklenenSatir = tbody.querySelector(`tr[data-id="${p.id}"]`);
+    if (eklenenSatir) {
+    eklenenSatir.style.animation = 'vurgu 2s ease';
+    }
+    }
+    });
+
+    } catch(e) { console.warn('Veri güncelleme hatası:', e); }
+    }
+
+    // ── SignalR'dan RefreshData gelince güncelle ──
+    // Layout'taki connection nesnesine erişemeyiz, bu yüzden event sistemi kullanırız
+    window.addEventListener('refreshPayments', function() {
+    odemeVerisiniGuncelle();
+    });
+
+
+
+    <script>
+        $(document).ready(function () {
+            $('#tblBenim').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' },
+                pageLength: 10,
+                order: [[4, 'asc']]
+            });
+        });
+               
+    </script>
+    <style>
+@@keyframes vurgu {
+    0%   { background-color: #fff9c4; }
+    50%  { background-color: #fff9c4; }
+    100% { background-color: inherit; }
+}
+</style>
+}

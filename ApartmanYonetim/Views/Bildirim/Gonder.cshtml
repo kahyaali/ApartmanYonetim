@@ -1,0 +1,134 @@
+﻿@model ApartmanYonetim.Controllers.TopluBildirimViewModel
+@{
+    ViewData["Title"] = "Toplu Bildirim";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-bell me-2"></i>Toplu Bildirim Gönder</h4>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="form-card" style="max-width:100%;">
+            <h6 class="mb-4" style="font-weight:600;color:#1e3a5f;">
+                <i class="fas fa-paper-plane me-2"></i>Bildirim Oluştur
+            </h6>
+            <form asp-action="Gonder" method="post">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" style="font-size:13px;">
+                            Mesaj *
+                        </label>
+                        <textarea name="Mesaj" class="form-control" rows="4"
+                                  placeholder="Tüm sakinlere gönderilecek mesaj...">@Model.Mesaj</textarea>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" style="font-size:13px;">
+                            Bildirim Tipi
+                        </label>
+                        <select name="Tip" class="form-select">
+                            <option value="info">ℹ️ Bilgi</option>
+                            <option value="success">✅ Başarı</option>
+                            <option value="warning">⚠️ Uyarı</option>
+                            <option value="danger">🚨 Acil</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <div style="background:#f8fafc;border-radius:12px;
+                            padding:16px;">
+                            <div class="form-check mb-2">
+                                <input name="SignalRGonder" type="checkbox"
+                                       class="form-check-input"
+                                       id="signalrCheck" checked />
+                                <label class="form-check-label"
+                                       for="signalrCheck"
+                                       style="font-size:13px;">
+                                    <strong>Anlık Bildirim (SignalR)</strong>
+                                    <div style="font-size:11px;color:#718096;">
+                                        Şu an online olan sakinler anlık görür.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input name="MailGonder" type="checkbox"
+                                       class="form-check-input"
+                                       id="mailCheck"
+                                       onchange="toggleMailBaslik(this.checked)" />
+                                <label class="form-check-label"
+                                       for="mailCheck"
+                                       style="font-size:13px;">
+                                    <strong>E-posta Gönder</strong>
+                                    <div style="font-size:11px;color:#718096;">
+                                        Tüm sakinlere e-posta gönderilir.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12" id="mailBaslikDiv"
+                         style="display:none;">
+                        <label class="form-label" style="font-size:13px;">
+                            E-posta Başlığı
+                        </label>
+                        <input name="MailBaslik" value="@Model.MailBaslik"
+                               class="form-control"
+                               placeholder="E-posta konu satırı" />
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <button type="submit" class="btn btn-auth"
+                                style="width:auto;padding:10px 32px;">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            Gönder (@ViewBag.ToplamSakin Sakin)
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="table-card">
+            <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+                <i class="fas fa-info-circle me-2"></i>Bilgi
+            </h6>
+            <div style="font-size:13px;color:#4a5568;line-height:1.8;">
+                <p>
+                    <strong>Anlık Bildirim:</strong> Sakinlerin ekranında
+                    sağ üst köşede popup çıkar. Sadece o an bağlı olanlar görür.
+                </p>
+                <p>
+                    <strong>E-posta:</strong> Tüm sakinlere e-posta gider.
+                    SMTP ayarlarınızın doğru olduğundan emin olun.
+                </p>
+                <div style="background:#fff9c4;border-radius:8px;
+                    padding:10px 14px;margin-top:8px;">
+                    <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                    <strong>Dikkat:</strong> Toplu e-posta çok sayıda
+                    alıcıya gönderilir. Spam olarak işaretlenebilir.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleMailBaslik(goster) {
+            document.getElementById('mailBaslikDiv').style.display =
+                goster ? 'block' : 'none';
+        }
+    </script>
+}

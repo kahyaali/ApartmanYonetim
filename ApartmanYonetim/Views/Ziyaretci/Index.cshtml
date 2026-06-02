@@ -1,0 +1,237 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Ziyaretci>
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Ziyaretçi Yönetimi";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-user-friends me-2"></i>Ziyaretçi Yönetimi</h4>
+    <a asp-action="Ekle" class="btn btn-sm"
+           style="background:#1e3a5f;color:#fff;border-radius:8px;">
+        <i class="fas fa-plus me-1"></i>Ziyaretçi Ekle
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fdf6ec;">
+                    <i class="fas fa-clock" style="color:#e67e22;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.Bekleyen</div>
+                    <div class="stat-label">Bekleyen</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#eafaf1;">
+                    <i class="fas fa-door-open" style="color:#27ae60;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.Icerde</div>
+                    <div class="stat-label">İçeride</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#e8f4fd;">
+                    <i class="fas fa-sign-out-alt" style="color:#2d6a9f;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.BugunCikan</div>
+                    <div class="stat-label">Bugün Çıkan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblZiyaretci" class="table table-hover align-middle"
+               style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>Telefon</th>
+                    <th>Plaka</th>
+                    <th>Ziyaret Edilen Daire</th>
+                    <th>Davet Eden</th>
+                    <th>Beklenen Giriş</th>
+                    <th>Gerçek Giriş</th>
+                    <th>Çıkış</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var z in Model)
+                {
+                    string durumClass = z.Durum switch
+                    {
+                        ZiyaretciDurum.Bekliyor => "badge bg-warning text-dark",
+                        ZiyaretciDurum.Icerde => "badge bg-success",
+                        ZiyaretciDurum.Cikti => "badge bg-secondary",
+                        ZiyaretciDurum.Reddedildi => "badge bg-danger",
+                        _ => "badge bg-secondary"
+                    };
+
+                    string rowClass = z.Durum switch
+                    {
+                        ZiyaretciDurum.Bekliyor => "row-sari",
+                        ZiyaretciDurum.Icerde => "row-yesil",
+                        ZiyaretciDurum.Reddedildi => "row-kirmizi",
+                        _ => ""
+                    };
+
+                    <tr class="@rowClass">
+                        <td><strong>@z.AdSoyad</strong></td>
+                        <td style="font-size:12px;">@(z.Telefon ?? "—")</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(z.AracPlaka))
+                            {
+                                <span style="font-family:monospace;font-weight:600;
+                                    letter-spacing:1px;">
+                                    @z.AracPlaka
+                                </span>
+                            }
+                            else
+                            {
+
+                                <span style="color:#a0aec0;">—</span>
+                            }
+                        </td>
+                        <td>
+                            @if (z.Apartment != null)
+                            {
+                                <div>Daire @z.Apartment.DaireNo</div>
+                                <div style="font-size:11px;color:#718096;">
+                                    @z.Apartment.Block?.Ad
+                                </div>
+                            }
+                            else
+                            {
+
+                                <span style="color:#a0aec0;">—</span>
+                            }
+                        </td>
+                        <td style="font-size:12px;">
+                            @z.DavetEden?.Ad @z.DavetEden?.Soyad
+                        </td>
+                        <td>
+                            @z.BeklenenGirisSaati.ToString("dd.MM HH:mm")
+                        </td>
+                        <td>
+                            @(z.GercekGirisSaati.HasValue
+                                ? z.GercekGirisSaati.Value.ToString("dd.MM HH:mm")
+                                : "—")
+                        </td>
+                        <td>
+                            @(z.CikisSaati.HasValue
+                                ? z.CikisSaati.Value.ToString("dd.MM HH:mm")
+                                : "—")
+                        </td>
+                        <td>
+                            <span class="@durumClass" style="font-size:11px;">
+                                @z.Durum
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    @if (z.Durum == ZiyaretciDurum.Bekliyor)
+                                    {
+                                        <form asp-action="GirisYap"
+                                              asp-route-id="@z.Id" method="post">
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-success"
+                                                    style="font-size:11px;"
+                                                    title="Giriş Onayla">
+                                                <i class="fas fa-door-open"></i>
+                                            </button>
+                                        </form>
+                                        <form asp-action="Reddet"
+                                              asp-route-id="@z.Id" method="post">
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    style="font-size:11px;"
+                                                    title="Reddet">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    @if (z.Durum == ZiyaretciDurum.Icerde)
+                                    {
+                                        <form asp-action="CikisYap"
+                                              asp-route-id="@z.Id" method="post">
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-warning"
+                                                    style="font-size:11px;"
+                                                    title="Çıkış Kaydet">
+                                                <i class="fas fa-sign-out-alt"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    <button type="button"
+                                            onclick="ziyaretciSil(@z.Id, '@z.AdSoyad')"
+                                            class="btn btn-sm btn-outline-danger"
+                                            style="font-size:11px;" title="Sil">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <form id="silForm_@z.Id"
+                                          asp-action="Sil" asp-route-id="@z.Id"
+                                          method="post" style="display:none;"></form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function ziyaretciSil(id, adSoyad) {
+            showConfirm(`"${adSoyad}" kaydını silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (onay)
+                        document.getElementById(`silForm_${id}`).submit();
+                });
+        }
+        $(document).ready(function() {
+            $('#tblZiyaretci').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' },
+                pageLength: 15,
+                order: [[5, 'desc']]
+            });
+        });
+    </script>
+}

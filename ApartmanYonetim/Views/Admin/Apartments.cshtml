@@ -1,0 +1,149 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Apartment>
+@{
+    ViewData["Title"] = "Daireler";
+}
+
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-building me-2"></i>Daireler</h4>
+ 
+    <a asp-action="ApartmentCreate" class="btn btn-sm"
+           style="background:#1e3a5f;color:#fff;border-radius:8px;">
+        <i class="fas fa-plus me-1"></i>Yeni Daire
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblDaireler" class="table table-hover align-middle"
+               style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Blok</th>
+                    <th>Kat</th>
+                    <th>Daire No</th>
+                    <th>Tip</th>
+                    <th>m²</th>
+                    <th>Durum</th>
+                    <th>Aktif Sakin</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model)
+                {
+                    <tr>
+                        <td>
+                            <span class="badge"
+                                  style="background:#e8f4fd;color:#2d6a9f;">
+                                @(d.Block?.Ad ?? "—")
+                            </span>
+                        </td>
+                        <td>@d.Kat. Kat</td>
+                        <td><strong>Daire @d.DaireNo</strong></td>
+                        <td>@d.Tipi</td>
+                        <td>@d.MetreKare m²</td>
+                        <td>
+                            @if (d.Dolu)
+                            {
+                                <span class="badge"
+                                      style="background:#fde8cc;color:#e67e22;">
+                                    Dolu
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge"
+                                      style="background:#eafaf1;color:#27ae60;">
+                                    Boş
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @{
+                                var aktif = d.Residents.FirstOrDefault();
+                            }
+                            @(aktif != null ? $"{aktif.Ad} {aktif.Soyad}" : "—")
+                        </td>
+                        <td>
+                            <a asp-action="ApartmentEdit" asp-route-id="@d.Id"
+                                   class="btn btn-sm btn-outline-primary"
+                                   style="font-size:11px;">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form asp-action="ApartmentDelete" asp-route-id="@d.Id"
+                                  method="post" class="d-inline">                       
+                                <button type="button"
+                                        onclick="daireSil(@d.Id, '@d.DaireNo')"
+                                        class="btn btn-sm btn-outline-danger"
+                                        style="font-size:11px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tblDaireler').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                pageLength: 15
+            });
+        });
+
+          function daireSil(id, ad) {
+               showConfirm(`DaireNo "${ad}" silmek istediğinize emin misiniz?`)
+                   .then(onay => {
+                       if (!onay) return;
+                       const form = document.createElement('form');
+                       form.method = 'POST';
+                       form.action = `/Admin/ApartmentDelete/${id}`;
+                       const token = document.querySelector(
+                           'input[name="__RequestVerificationToken"]')?.value;
+                       if (token) {
+                           const inp = document.createElement('input');
+                           inp.type = 'hidden';
+                           inp.name = '__RequestVerificationToken';
+                           inp.value = token;
+                           form.appendChild(inp);
+                       }
+                       document.body.appendChild(form);
+                       form.submit();
+                   });
+           }
+    </script>
+}

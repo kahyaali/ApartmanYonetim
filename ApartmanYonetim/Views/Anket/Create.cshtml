@@ -1,0 +1,97 @@
+﻿@model ApartmanYonetim.Models.ViewModels.AnketViewModel
+@{
+    ViewData["Title"] = "Yeni Anket";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-plus me-2"></i>Yeni Anket Oluştur</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card" style="max-width:640px;">
+    <form asp-action="Create" method="post" id="anketForm">
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Başlık *</label>
+                <input name="Baslik" value="@Model.Baslik"
+                       class="form-control" placeholder="Anket başlığı" />
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Açıklama</label>
+                <textarea name="Aciklama" class="form-control" rows="2"
+                          placeholder="Anket hakkında bilgi...">@Model.Aciklama</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">
+                    Bitiş Tarihi *
+                </label>
+                <input name="BitisTarihi" type="datetime-local"
+                       value="@Model.BitisTarihi.ToString("yyyy-MM-ddTHH:mm")"
+                       class="form-control" />
+            </div>
+
+            <!-- Seçenekler -->
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    Seçenekler * (En az 2)
+                </label>
+                <div id="sikContainer">
+                    @for (int i = 0; i < 2; i++)
+                    {
+                        <div class="d-flex gap-2 mb-2 sik-row">
+                            <input type="text" name="Siklar[@i]"
+                                   class="form-control"
+                                   placeholder="Seçenek @(i + 1)" />
+                            @if (i >= 2)
+                            {
+                                <button type="button" onclick="sikSil(this)"
+                                        class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+                <button type="button" onclick="sikEkle()"
+                        class="btn btn-sm btn-outline-primary mt-1">
+                    <i class="fas fa-plus me-1"></i>Seçenek Ekle
+                </button>
+            </div>
+
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-poll me-2"></i>Anketi Oluştur
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        let sikSayisi = 2;
+
+        function sikEkle() {
+            const container = document.getElementById('sikContainer');
+            const div = document.createElement('div');
+            div.className = 'd-flex gap-2 mb-2 sik-row';
+            div.innerHTML = `
+                <input type="text" name="Siklar[${sikSayisi}]"
+                       class="form-control"
+                       placeholder="Seçenek ${sikSayisi + 1}" />
+                <button type="button" onclick="sikSil(this)"
+                        class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-times"></i>
+                </button>`;
+            container.appendChild(div);
+            sikSayisi++;
+        }
+
+        function sikSil(btn) {
+            btn.closest('.sik-row').remove();
+        }
+    </script>
+}

@@ -1,0 +1,117 @@
+﻿@model List<ApartmanYonetim.Models.Entities.AuditLog>
+@{
+    ViewData["Title"] = "Audit Log";
+}
+
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-history me-2"></i>Sistem Logları</h4>
+ 
+    <form asp-action="Clear" method="post"
+          onsubmit="return confirm('3 aydan eski loglar silinecek. Emin misiniz?')">
+        <button type="submit" class="btn btn-sm btn-outline-danger">
+            <i class="fas fa-trash me-1"></i>Eski Logları Temizle
+        </button>
+    </form>
+    <button onclick="window.print()"
+            class="btn btn-sm btn-outline-secondary no-print">
+        <i class="fas fa-print me-1"></i>Yazdır
+    </button>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3" style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblAudit" class="table table-hover align-middle" style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Tarih</th>
+                    <th>Kullanıcı</th>
+                    <th>İşlem</th>
+                    <th>Tablo</th>
+                    <th>Detay</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td>
+                            <div>@log.Tarih.ToString("dd.MM.yyyy")</div>
+                            <div style="font-size:11px;color:#718096;">
+                                @log.Tarih.ToString("HH:mm:ss")
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight:600;">@log.KullaniciAdi</div>
+                        </td>
+                        <td>
+                            @{
+                                var islemClass = log.Islem.Contains("Silindi")
+                                    ? "badge bg-danger"
+                                    : log.Islem.Contains("Eklendi")
+                                    ? "badge bg-success"
+                                    : "badge bg-info text-dark";
+                            }
+                            <span class="@islemClass" style="font-size:11px;">
+                                @log.Islem
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  style="background:#e8f4fd;color:#2d6a9f;font-size:11px;">
+                                @log.Entity
+                            </span>
+                        </td>
+                        <td style="max-width:200px;">
+                            @if (!string.IsNullOrEmpty(log.YeniDeger))
+                            {
+                                <div style="font-size:12px;color:#27ae60;">
+                                    ➜ @log.YeniDeger
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(log.EskiDeger))
+                            {
+                                <div style="font-size:12px;color:#e74c3c;">
+                                    ✕ @log.EskiDeger
+                                </div>
+                            }
+                        </td>
+                        <td style="font-size:11px;color:#a0aec0;">
+                            @(log.IpAdresi ?? "-")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tblAudit').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' },
+                pageLength: 25,
+                order: [[0, 'desc']]
+            });
+        });
+    </script>
+}

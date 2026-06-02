@@ -1,0 +1,92 @@
+﻿@model ApartmanYonetim.Controllers.YoneticiEkleViewModel
+@{
+    ViewData["Title"] = "Yönetici Ekle";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-user-plus me-2"></i>Yönetici Ekle</h4>
+    <a asp-action="Yoneticiler" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger mb-3" style="font-size:13px;">
+        @foreach (var error in ViewData.ModelState.Values
+            .SelectMany(v => v.Errors))
+        {
+            <div>
+                <i class="fas fa-exclamation-circle me-1"></i>
+                @error.ErrorMessage
+            </div>
+        }
+    </div>
+}
+
+<div class="form-card" style="max-width:600px;">
+    <form asp-action="YoneticiEkle" method="post">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Ad *</label>
+                <input name="Ad" value="@Model.Ad"
+                       class="form-control" placeholder="Ad" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Soyad *</label>
+                <input name="Soyad" value="@Model.Soyad"
+                       class="form-control" placeholder="Soyad" />
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    E-posta *
+                </label>
+                <input name="Email" value="@Model.Email" type="email"
+                       class="form-control" placeholder="yonetici@email.com" />
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Şifre *</label>
+                <input name="Sifre" type="password" class="form-control"
+                       placeholder="En az 6 karakter" />
+            </div>
+
+            <!-- Blok Ataması -->
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    Atanacak Bloklar
+                </label>
+                <div style="background:#f8fafc;border-radius:10px;
+                    padding:14px;max-height:200px;overflow-y:auto;">
+                    @if (ViewBag.Bloklar != null)
+                    {
+                        @foreach (ApartmanYonetim.Models.Entities.Block b
+                            in ViewBag.Bloklar)
+                        {
+                            <div class="form-check mb-1">
+                                <input type="checkbox" name="BlokIds"
+                                       value="@b.Id"
+                                       class="form-check-input"
+                                       id="blok_@b.Id" />
+                                <label class="form-check-label"
+                                       for="blok_@b.Id"
+                                       style="font-size:13px;">
+                                    @b.Ad
+                                </label>
+                            </div>
+                        }
+                    }
+                </div>
+                <div style="font-size:11px;color:#a0aec0;margin-top:4px;">
+                    Hiç blok seçilmezse tüm bloklara erişim olur.
+                </div>
+            </div>
+
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-save me-2"></i>Yönetici Ekle
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

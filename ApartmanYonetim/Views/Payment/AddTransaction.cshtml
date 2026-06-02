@@ -1,0 +1,149 @@
+﻿@model ApartmanYonetim.Models.ViewModels.TransactionViewModel
+@{
+    ViewData["Title"] = "Ödeme Ekle";
+    var payment = ViewBag.Payment as ApartmanYonetim.Models.Entities.Payment;
+    decimal kalanTutar = ViewBag.KalanTutar;
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+<div class="page-header">
+    <h4><i class="fas fa-plus me-2"></i>Ödeme Ekle</h4>
+  
+    <a asp-action="Detail" asp-route-id="@Model.PaymentId"
+           class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<!-- Mevcut Borç Bilgisi -->
+<div class="table-card mb-4"
+     style="border-left:4px solid #e74c3c;max-width:560px;margin-left:0;">
+    <div class="row g-3">
+        <div class="col-4 text-center">
+            <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                letter-spacing:1px;">
+                Toplam Borç
+            </div>
+            <div style="font-size:18px;font-weight:700;color:#1e3a5f;">
+                @payment?.Tutar.ToString("N2") ₺
+            </div>
+        </div>
+        <div class="col-4 text-center">
+            <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                letter-spacing:1px;">
+                Ödenen
+            </div>
+            <div style="font-size:18px;font-weight:700;color:#27ae60;">
+                @payment?.OdenenTutar.ToString("N2") ₺
+            </div>
+        </div>
+        <div class="col-4 text-center">
+            <div style="font-size:11px;color:#a0aec0;text-transform:uppercase;
+                letter-spacing:1px;">
+                Kalan
+            </div>
+            <div style="font-size:18px;font-weight:700;color:#e74c3c;">
+                @kalanTutar.ToString("N2") ₺
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-card" style="max-width:560px;">
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger mb-3" style="font-size:13px;">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <div><i class="fas fa-exclamation-circle me-1"></i>@error.ErrorMessage</div>
+            }
+        </div>
+    }
+
+    <form asp-action="AddTransaction" method="post">
+        <input asp-for="PaymentId" type="hidden" />
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Ödenen Tutar (₺)</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light">₺</span>
+                    <input asp-for="OdenenTutar" class="form-control"
+                           type="number" step="0.01"
+                           max="@kalanTutar.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
+                </div>
+                <span asp-validation-for="OdenenTutar" class="text-danger" style="font-size:12px;"></span>
+                <div style="font-size:11px;color:#718096;margin-top:4px;">
+                    Maksimum: @kalanTutar.ToString("N2") ₺
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Ödeme Tarihi</label>
+                <input asp-for="OdemeTarihi" class="form-control" type="date" />
+                <span asp-validation-for="OdemeTarihi" class="text-danger" style="font-size:12px;"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Ödeyen Kişi</label>
+                <input asp-for="OdeyenKisi" class="form-control"
+                       placeholder="Örn: Ahmet Yılmaz" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Not / Açıklama</label>
+                <input asp-for="Aciklama" class="form-control"
+                       placeholder="Örn: Nakit ödeme" />
+            </div>
+
+            <!-- Hızlı tutar butonları -->
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Hızlı Seçim</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="setTutar(@((kalanTutar * 0.25m).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)))"
+                            style="font-size:12px;">
+                        %25 — @((kalanTutar * 0.25m).ToString("N2")) ₺
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="setTutar(@((kalanTutar * 0.5m).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)))"
+                            style="font-size:12px;">
+                        %50 — @((kalanTutar * 0.5m).ToString("N2")) ₺
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="setTutar(@((kalanTutar * 0.75m).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)))"
+                            style="font-size:12px;">
+                        %75 — @((kalanTutar * 0.75m).ToString("N2")) ₺
+                    </button>
+                    <button type="button" class="btn btn-sm"
+                            onclick="setTutar(@kalanTutar.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
+                            style="background:#27ae60;color:#fff;font-size:12px;border-radius:6px;border:none;padding:4px 12px;">
+                        Tamamını Öde — @kalanTutar.ToString("N2") ₺
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;background:#27ae60;">
+                    <i class="fas fa-check me-2"></i>Ödemeyi Kaydet
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function setTutar(tutar) {
+            document.getElementById('OdenenTutar').value = tutar;
+        }
+    </script>
+}

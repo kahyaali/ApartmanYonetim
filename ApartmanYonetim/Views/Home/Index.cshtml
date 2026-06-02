@@ -1,0 +1,358 @@
+﻿@{
+    ViewData["Title"] = "Ana Sayfa";
+    var sonOdemeler = ViewBag.SonOdemeler as List<ApartmanYonetim.Models.Entities.Payment>;
+    var sonDuyurular = ViewBag.SonDuyurular as List<ApartmanYonetim.Models.Entities.Announcement>;
+
+    decimal toplamGelir = ViewBag.ToplamGelir ?? 0m;
+    decimal toplamGider = ViewBag.ToplamGider ?? 0m;
+    decimal toplamBorc = ViewBag.ToplamBorc ?? 0m;
+    int toplamDaire = ViewBag.ToplamDaire ?? 0;
+    int toplamSakin = ViewBag.ToplamSakin ?? 0;
+    int bekleyenOdeme = ViewBag.BekleyenOdeme ?? 0;
+}
+
+<!-- İstatistik Kartları -->
+@if (User.IsInRole("Admin"))
+{
+    <div class="table-card mb-4">
+        <div class="d-flex align-items-center justify-content-between">
+            <h6 class="mb-0" style="font-weight:600;color:#1e3a5f;">
+                <i class="fas fa-file-excel me-2" style="color:#27ae60;"></i>
+                Aylık Rapor İndir
+            </h6>
+            <form asp-controller="Export" asp-action="MonthlyReport" method="get"
+                  class="d-flex align-items-center gap-2">
+                <select name="ay" class="form-select form-select-sm" style="width:130px;">
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        var ayAdi = new DateTime(2024, i, 1)
+                            .ToString("MMMM", new System.Globalization.CultureInfo("tr-TR"));
+                        <option value="@i" selected="@(i == DateTime.Now.Month)">@ayAdi</option>
+                    }
+                </select>
+                <select name="yil" class="form-select form-select-sm" style="width:90px;">
+                    @for (int y = DateTime.Now.Year - 1; y <= DateTime.Now.Year + 1; y++)
+                    {
+                        <option value="@y" selected="@(y == DateTime.Now.Year)">@y</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-sm"
+                        style="background:#27ae60;color:#fff;border-radius:8px;white-space:nowrap;">
+                    <i class="fas fa-download me-1"></i>İndir
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#e8f4fd;">
+                        <i class="fas fa-building" style="color:#2d6a9f;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">@toplamDaire</div>
+                        <div class="stat-label">Toplam Daire</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#e8f8f0;">
+                        <i class="fas fa-users" style="color:#27ae60;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">@toplamSakin</div>
+                        <div class="stat-label">Aktif Sakin</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#eafaf1;">
+                        <i class="fas fa-money-bill-wave" style="color:#1abc9c;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">
+                            @toplamGelir ₺
+                        </div>
+                        <div class="stat-label">Toplam Tahsilat</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#fdf2f2;">
+                        <i class="fas fa-receipt" style="color:#e74c3c;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">
+                            @toplamGider ₺
+                        </div>
+                        <div class="stat-label">Toplam Gider</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#fdf2f2;">
+                        <i class="fas fa-receipt" style="color:#e74c3c;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">
+                            @bekleyenOdeme 
+                        </div>
+                        <div class="stat-label">Bekleyen Ödeme</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#fdf2f2;">
+                        <i class="fas fa-receipt" style="color:#e74c3c;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">
+                            @toplamBorc ₺
+                        </div>
+                        <div class="stat-label">Toplam Borç</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Son Ödemeler -->
+    <div class="col-lg-8">
+        <div class="table-card">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="mb-0" style="font-weight:600;color:#1e3a5f;">
+                    <i class="fas fa-money-bill-wave me-2" style="color:#2d6a9f;"></i>
+                    Son Ödemeler
+                </h6>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Payment" asp-action="Index"
+                           class="btn btn-sm"
+                           style="background:#1e3a5f;color:#fff;border-radius:8px;font-size:12px;">
+                        Tümünü Gör
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Payment" asp-action="MyPayments"
+                           class="btn btn-sm"
+                           style="background:#1e3a5f;color:#fff;border-radius:8px;font-size:12px;">
+                        Tümünü Gör
+                    </a>
+                }
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size:13px;">
+                    <thead style="background:#f8fafc;">
+                        <tr>
+                            <th class="border-0" style="color:#718096;font-weight:500;">Daire</th>
+                            <th class="border-0" style="color:#718096;font-weight:500;">Açıklama</th>
+                            <th class="border-0" style="color:#718096;font-weight:500;">Tutar</th>
+                            <th class="border-0" style="color:#718096;font-weight:500;">Kalan</th>
+                            <th class="border-0" style="color:#718096;font-weight:500;">Son Tarih</th>
+                            <th class="border-0" style="color:#718096;font-weight:500;">Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (sonOdemeler != null && sonOdemeler.Any())
+                        {
+                            @foreach (var odeme in sonOdemeler)
+                            {
+                                var bugun = DateTime.Today;
+                                var fark = (odeme.SonOdemeTarihi.Date - bugun).TotalDays;
+                                string rowClass, durum, durumClass;
+
+                                if (odeme.Odendi || odeme.KalanTutar <= 0)
+                                {
+                                    rowClass = "row-yesil";
+                                    durum = "Ödendi";
+                                    durumClass = "badge bg-success";
+                                }
+                                else if (fark < 0)
+                                {
+                                    rowClass = "row-kirmizi";
+                                    durum = "Gecikmiş";
+                                    durumClass = "badge bg-danger";
+                                }
+                                else if (fark <= 3)
+                                {
+                                    rowClass = "row-kirmizi";
+                                    durum = "Acil";
+                                    durumClass = "badge bg-danger";
+                                }
+                                else if (fark <= 5)
+                                {
+                                    rowClass = "row-sari";
+                                    durum = "Yaklaşıyor";
+                                    durumClass = "badge bg-warning text-dark";
+                                }
+                                else
+                                {
+                                    rowClass = "row-turuncu";
+                                    durum = "Bekliyor";
+                                    durumClass = "badge bg-secondary";
+                                }
+
+                                <tr class="@rowClass">
+                                    <td>
+                                        <div style="font-weight:600;color:#1e3a5f;">
+                                            Daire @odeme.Apartment?.DaireNo
+                                        </div>
+                                        @if (odeme.Apartment?.Block != null)
+                                        {
+                                            <div style="font-size:11px;color:#718096;">
+                                                @odeme.Apartment.Block.Ad
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>@odeme.Aciklama</td>
+                                    <td>@odeme.Tutar.ToString("N2") ₺</td>
+                                    <td>
+                                        @if (odeme.KalanTutar > 0)
+                                        {
+                                            <strong style="color:#e74c3c;">
+                                                @odeme.KalanTutar.ToString("N2") ₺
+                                            </strong>
+                                        }
+                                        else
+                                        {
+                                            <span style="color:#27ae60;">—</span>
+                                        }
+                                    </td>
+                                    <td>@odeme.SonOdemeTarihi.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        <span class="@durumClass" style="font-size:11px;">
+                                            @durum
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox me-2"></i>Henüz ödeme kaydı yok.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duyurular -->
+    <div class="col-lg-4">
+        <div class="table-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="mb-0" style="font-weight:600;color:#1e3a5f;">
+                    <i class="fas fa-bullhorn me-2" style="color:#e67e22;"></i>
+                    Duyurular
+                </h6>
+                <a asp-controller="Announcement" asp-action="Index"
+                       class="btn btn-sm"
+                       style="background:#1e3a5f;color:#fff;border-radius:8px;font-size:12px;">
+                    Tümü
+                </a>
+            </div>
+
+            @if (sonDuyurular != null && sonDuyurular.Any())
+            {
+                @foreach (var duyuru in sonDuyurular)
+                {
+                    <div class="mb-3 pb-3" style="border-bottom:1px solid #f0f2f5;">
+                        <div class="d-flex align-items-start gap-2">
+                            <div style="width:8px;height:8px;border-radius:50%;
+                                background:#e67e22;margin-top:6px;flex-shrink:0;">
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:#2d3748;">
+                                    @duyuru.Baslik
+                                </div>
+                                <div style="font-size:12px;color:#718096;margin-top:2px;">
+                                    @duyuru.Icerik.Substring(0, Math.Min(duyuru.Icerik.Length, 80))
+                                    @(duyuru.Icerik.Length > 80 ? "..." : "")
+                                </div>
+                                <div style="font-size:11px;color:#a0aec0;margin-top:4px;">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    @duyuru.YayinTarihi.ToString("dd MMM yyyy",
+                                        new System.Globalization.CultureInfo("tr-TR"))
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted py-4" style="font-size:13px;">
+                    <i class="fas fa-bullhorn me-2"></i>Henüz duyuru yok.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Renk Açıklaması -->
+<div class="mt-4">
+    <div class="table-card">
+        <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;font-size:13px;">
+            <i class="fas fa-info-circle me-2"></i>Ödeme Durum Renkleri
+        </h6>
+        <div class="d-flex flex-wrap gap-3">
+            <span class="d-flex align-items-center gap-2" style="font-size:12px;">
+                <span style="width:16px;height:16px;background:#d4edda;
+                border-radius:4px;display:inline-block;"></span>
+                Ödeme tamamlandı
+            </span>
+            <span class="d-flex align-items-center gap-2" style="font-size:12px;">
+                <span style="width:16px;height:16px;background:#fde8cc;
+                border-radius:4px;display:inline-block;"></span>
+                Bekliyor / Kısmi ödeme
+            </span>
+            <span class="d-flex align-items-center gap-2" style="font-size:12px;">
+                <span style="width:16px;height:16px;background:#fff9c4;
+                border-radius:4px;display:inline-block;"></span>
+                Son 5 güne girdi
+            </span>
+            <span class="d-flex align-items-center gap-2" style="font-size:12px;">
+                <span style="width:16px;height:16px;background:#ffd6d6;
+                border-radius:4px;display:inline-block;"></span>
+                Son 3 gün / Gecikmiş
+            </span>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Dashboard'da da SignalR ile güncelleme
+        window.addEventListener('refreshPayments', function() {
+            // Sayfayı tamamen yenile
+            location.reload();
+        });
+    </script>
+}

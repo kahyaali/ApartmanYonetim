@@ -1,0 +1,259 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Belge>
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = "Belgeler";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-folder-open me-2"></i>Belge Yönetimi</h4>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Upload" class="btn btn-sm"
+               style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-upload me-1"></i>Belge Yükle
+        </a>
+    }
+</div>
+
+<!-- Özet -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#e8f4fd;">
+                    <i class="fas fa-file" style="color:#2d6a9f;"></i>
+                </div>
+                <div>
+                    <div class="stat-number">@ViewBag.ToplamBelge</div>
+                    <div class="stat-label">Toplam Belge</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-3"
+         style="font-size:13px;">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Filtreler -->
+<div class="table-card mb-3">
+    <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
+        <div>
+            <label class="form-label" style="font-size:12px;">Kategori</label>
+            <select name="kategori" class="form-select form-select-sm"
+                    style="width:150px;">
+                <option value="">Tümü</option>
+                @foreach (BelgeKategori k in Enum.GetValues(typeof(BelgeKategori)))
+                {
+                    <option value="@((int)k)"
+                            selected="@(ViewBag.SecilenKategori == k)">
+                        @k
+                    </option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label" style="font-size:12px;">Ara</label>
+            <input name="ara" type="text" class="form-control form-control-sm"
+                   value="@ViewBag.AramaMetni"
+                   placeholder="Belge adı..."
+                   style="width:180px;" />
+        </div>
+        <button type="submit" class="btn btn-sm"
+                style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-filter me-1"></i>Filtrele
+        </button>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            Temizle
+        </a>
+    </form>
+</div>
+
+<!-- Belge Listesi -->
+@if (!Model.Any())
+{
+    <div class="table-card text-center py-5">
+        <i class="fas fa-folder-open text-muted"
+           style="font-size:48px;opacity:0.3;"></i>
+        <p class="text-muted mt-3">Henüz belge yüklenmemiş.</p>
+    </div>
+}
+else
+{
+    <div class="table-card">
+        <div class="table-responsive">
+            <table id="tblBelge" class="table table-hover align-middle"
+                   style="font-size:13px;">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        <th style="width:50px;">Tip</th>
+                        <th>Ad</th>
+                        <th>Kategori</th>
+                        <th>Boyut</th>
+                        <th>Yükleyen</th>
+                        <th>Tarih</th>
+                        <th>Erişim</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model)
+                    {
+                        string ikonClass = b.DosyaTipi.ToLower() switch
+                        {
+                            "pdf" => "fa-file-pdf",
+                            "docx" or "doc" => "fa-file-word",
+                            "xlsx" or "xls" => "fa-file-excel",
+                            "jpg" or "jpeg" or "png" => "fa-file-image",
+                            "zip" => "fa-file-archive",
+                            _ => "fa-file"
+                        };
+
+                        string ikonRenk = b.DosyaTipi.ToLower() switch
+                        {
+                            "pdf" => "#e74c3c",
+                            "docx" or "doc" => "#2d6a9f",
+                            "xlsx" or "xls" => "#27ae60",
+                            "jpg" or "jpeg" or "png" => "#f39c12",
+                            _ => "#718096"
+                        };
+
+                        string boyut = b.DosyaBoyutu < 1024 * 1024
+                            ? $"{b.DosyaBoyutu / 1024} KB"
+                            : $"{b.DosyaBoyutu / (1024 * 1024)} MB";
+
+                        bool onizleDestekli = new[] { "pdf", "jpg",
+                            "jpeg", "png" }.Contains(b.DosyaTipi.ToLower());
+
+                        <tr>
+                            <td>
+                                <i class="fas @ikonClass"
+                                   style="font-size:26px;color:@ikonRenk;"></i>
+                            </td>
+                            <td>
+                                <div style="font-weight:600;">@b.Ad</div>
+                                @if (!string.IsNullOrEmpty(b.Aciklama))
+                                {
+                                    <div style="font-size:11px;color:#718096;">
+                                        @b.Aciklama
+                                    </div>
+                                }
+                                <div style="font-size:10px;color:#a0aec0;">
+                                    @b.DosyaAdi
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      style="background:#e8f4fd;color:#2d6a9f;
+                                    font-size:11px;">
+                                    @b.Kategori
+                                </span>
+                            </td>
+                            <td style="font-size:12px;color:#718096;">@boyut</td>
+                            <td style="font-size:12px;">
+                                @b.Yukleyen?.Ad @b.Yukleyen?.Soyad
+                            </td>
+                            <td>@b.YuklemeTarihi.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                @if (b.HerkesGorebilir)
+                                {
+                                    <span class="badge bg-success"
+                                          style="font-size:11px;">
+                                        Herkese Açık
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark"
+                                          style="font-size:11px;">
+                                        Sadece Admin
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <!-- İndir -->
+                                    <a asp-action="Indir" asp-route-id="@b.Id"
+                                           class="btn btn-sm btn-outline-primary"
+                                           style="font-size:11px;" title="İndir">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+
+                                    <!-- Önizle (sadece PDF ve resim) -->
+                                    @if (onizleDestekli)
+                                    {
+                                        <a asp-action="Onizle" asp-route-id="@b.Id"
+                                               class="btn btn-sm btn-outline-info"
+                                               style="font-size:11px;"
+                                               target="_blank" title="Önizle">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    }
+
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <!-- Düzenle -->
+                                        <a asp-action="Edit" asp-route-id="@b.Id"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               style="font-size:11px;" title="Düzenle">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        <!-- Sil -->
+                                        <button type="button"
+                                                onclick="belgeSil(@b.Id, '@b.Ad.Replace("'", "\\'")')"
+                                                class="btn btn-sm btn-outline-danger"
+                                                style="font-size:11px;" title="Sil">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <form id="belgeSilForm_@b.Id"
+                                              asp-action="Delete"
+                                              asp-route-id="@b.Id"
+                                              method="post"
+                                              style="display:none;"></form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function belgeSil(id, ad) {
+            showConfirm(`"${ad}" belgesini silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (onay)
+                        document.getElementById(`belgeSilForm_${id}`).submit();
+                });
+        }
+
+        $(document).ready(function() {
+            $('#tblBelge').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                pageLength: 15,
+                order: [[5, 'desc']]
+            });
+        });
+    </script>
+}

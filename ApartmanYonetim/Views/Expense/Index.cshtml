@@ -1,0 +1,166 @@
+﻿@model List<ApartmanYonetim.Models.Entities.Expense>
+@{
+    ViewData["Title"] = "Giderler";
+}
+
+<!-- Yazdırma başlığı — ekranda gizli, baskıda görünür -->
+<div class="print-header">
+    <h3 style="color:#1e3a5f;margin:0;">Apartman Yönetim Sistemi</h3>
+    <p style="color:#718096;margin:4px 0 0;">
+        Ödemeler Raporu — @DateTime.Now.ToString("dd MMMM yyyy HH:mm",
+                    new System.Globalization.CultureInfo("tr-TR"))
+    </p>
+</div>
+
+
+<div class="page-header">
+    <h4><i class="fas fa-receipt me-2"></i>Giderler</h4>
+    <div class="d-flex gap-2">
+      
+        <a asp-controller="Export" asp-action="Expenses"
+               class="btn btn-sm"
+               style="background:#27ae60;color:#fff;border-radius:8px;">
+            <i class="fas fa-file-excel me-1"></i>Excel
+        </a>
+        <a asp-controller="Expense" asp-action="Create"
+               class="btn btn-sm"
+               style="background:#1e3a5f;color:#fff;border-radius:8px;">
+            <i class="fas fa-plus me-1"></i>Yeni Gider
+        </a>
+    </div>
+    <button onclick="window.print()"
+            class="btn btn-sm btn-outline-secondary no-print">
+        <i class="fas fa-print me-1"></i>Yazdır
+    </button>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fdf2f2;">
+                    <i class="fas fa-receipt" style="color:#e74c3c;"></i>
+                </div>
+                <div>
+                    <div class="stat-number" style="font-size:20px;">
+                        @ViewBag.ToplamGider.ToString("N0") ₺
+                    </div>
+                    <div class="stat-label">Toplam Gider</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fdf6ec;">
+                    <i class="fas fa-calendar-alt" style="color:#e67e22;"></i>
+                </div>
+                <div>
+                    <div class="stat-number" style="font-size:20px;">
+                        @ViewBag.BuAyGider.ToString("N0") ₺
+                    </div>
+                    <div class="stat-label">Bu Ay Gider</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3" style="font-size:13px;">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table id="tblGiderler" class="table table-hover align-middle" style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Firma</th>
+                    <th>Çalışma Türü</th>
+                    <th>Açıklama</th>
+                    <th>Tutar</th>
+                    <th>Tarih</th>
+                    <th>Fatura No</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var g in Model)
+                {
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;">@g.FirmaAdi</div>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  style="background:#e8f4fd;color:#2d6a9f;font-size:11px;">
+                                @g.CalismaTuru
+                            </span>
+                        </td>
+                        <td style="max-width:200px;white-space:nowrap;
+                            overflow:hidden;text-overflow:ellipsis;">
+                            @g.Aciklama
+                        </td>
+                        <td><strong style="color:#e74c3c;">@g.Tutar.ToString("N2") ₺</strong></td>
+                        <td>@g.GiderTarihi.ToString("dd.MM.yyyy")</td>
+                        <td>@(g.FaturaNo ?? "-")</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@g.Id"
+                                   class="btn btn-sm btn-outline-primary" style="font-size:11px;">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@g.Id"
+                                  method="post" class="d-inline">
+                                <button type="button" 
+                                        onclick="giderSil(@g.Id, '@g.Tutar')"
+                                    class="btn btn-sm btn-outline-danger"
+                                        style="font-size:11px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tblGiderler').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' },
+                pageLength: 15,
+                order: [[4, 'desc']]
+            });
+        });
+
+        // Gider silme onayı
+         function giderSil(id, ad) {
+            showConfirm(`"${ad}" Gider Tutarını silmek istediğinize emin misiniz?`)
+                .then(onay => {
+                    if (!onay) return;
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/Expense/Delete/${id}`;
+                    const token = document.querySelector(
+                        'input[name="__RequestVerificationToken"]')?.value;
+                    if (token) {
+                        const inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = '__RequestVerificationToken';
+                        inp.value = token;
+                        form.appendChild(inp);
+                    }
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+        }
+    </script>
+}

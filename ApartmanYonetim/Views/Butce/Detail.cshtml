@@ -1,0 +1,180 @@
+﻿@model ApartmanYonetim.Models.Entities.ButcePlan
+@using ApartmanYonetim.Models.Entities
+@{
+    ViewData["Title"] = $"{Model.Yil} Bütçe Detayı";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-chart-pie me-2"></i>@Model.Yil Yılı Bütçe Planı</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<!-- Özet -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="font-size:18px;color:#27ae60;">
+                @ViewBag.ToplamPlanlananGelir.ToString("N0") ₺
+            </div>
+            <div class="stat-label">Planlanan Gelir</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="font-size:18px;color:#e74c3c;">
+                @ViewBag.ToplamPlanlananGider.ToString("N0") ₺
+            </div>
+            <div class="stat-label">Planlanan Gider</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="font-size:18px;color:#27ae60;">
+                @ViewBag.ToplamGerceklesenGelir.ToString("N0") ₺
+            </div>
+            <div class="stat-label">Gerçekleşen Gelir</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="font-size:18px;color:#e74c3c;">
+                @ViewBag.ToplamGerceklesenGider.ToString("N0") ₺
+            </div>
+            <div class="stat-label">Gerçekleşen Gider</div>
+        </div>
+    </div>
+</div>
+
+<!-- Kalem Ekle -->
+<div class="table-card mb-4">
+    <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+        <i class="fas fa-plus me-2"></i>Yeni Kalem Ekle
+    </h6>
+    <form asp-action="KalemEkle" method="post">
+        <input type="hidden" name="planId" value="@Model.Id" />
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label" style="font-size:12px;">Ay</label>
+                <select name="Ay" class="form-select form-select-sm">
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        var ayAdi = new DateTime(2024, i, 1)
+                            .ToString("MMM",
+                                new System.Globalization.CultureInfo("tr-TR"));
+                        <option value="@i"
+                                selected="@(i == DateTime.Now.Month)">
+                            @ayAdi
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" style="font-size:12px;">Tip</label>
+                <select name="Tip" class="form-select form-select-sm">
+                    <option value="0">Gelir</option>
+                    <option value="1">Gider</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" style="font-size:12px;">Kategori</label>
+                <select name="Kategori" class="form-select form-select-sm">
+                    <option value="Aidat">Aidat</option>
+                    <option value="Elektrik">Elektrik</option>
+                    <option value="Su">Su</option>
+                    <option value="Doğalgaz">Doğalgaz</option>
+                    <option value="Temizlik">Temizlik</option>
+                    <option value="Bakım">Bakım</option>
+                    <option value="Diğer">Diğer</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" style="font-size:12px;">Açıklama</label>
+                <input name="Aciklama" class="form-control form-control-sm"
+                       placeholder="Açıklama" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" style="font-size:12px;">
+                    Planlanan (₺)
+                </label>
+                <input name="PlanlananTutar" type="number" step="0.01"
+                       class="form-control form-control-sm" placeholder="0.00" />
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-sm"
+                        style="background:#1e3a5f;color:#fff;
+                    border-radius:8px;width:100%;">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Kalemler Tablosu -->
+<div class="table-card">
+    <h6 class="mb-3" style="font-weight:600;color:#1e3a5f;">
+        <i class="fas fa-list me-2"></i>Bütçe Kalemleri
+    </h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle" style="font-size:13px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th>Ay</th>
+                    <th>Tip</th>
+                    <th>Kategori</th>
+                    <th>Açıklama</th>
+                    <th>Planlanan</th>
+                    <th>Gerçekleşen</th>
+                    <th>Fark</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var k in Model.Kalemler)
+                {
+                    var fark = k.GerceklesenTutar - k.PlanlananTutar;
+                    var ayAdi = new DateTime(Model.Yil, k.Ay, 1)
+                        .ToString("MMMM",
+                            new System.Globalization.CultureInfo("tr-TR"));
+
+                    <tr>
+                        <td>@ayAdi</td>
+                        <td>
+                            <span class="badge @(k.Tip == ButceKalemTipi.Gelir
+                                 ? "bg-success" : "bg-danger")"
+                                  style="font-size:11px;">
+                                @k.Tip
+                            </span>
+                        </td>
+                        <td>@k.Kategori</td>
+                        <td>@k.Aciklama</td>
+                        <td>@k.PlanlananTutar.ToString("N2") ₺</td>
+                        <td>@k.GerceklesenTutar.ToString("N2") ₺</td>
+                        <td>
+                            <span style="color:@(fark >= 0 ? "#27ae60" : "#e74c3c");
+                                font-weight:600;">
+                                @(fark >= 0 ? "+" : "")@fark.ToString("N2") ₺
+                            </span>
+                        </td>
+                        <td>
+                            <form asp-action="KalemSil" method="post"
+                                  class="d-inline">
+                                <input type="hidden" name="id" value="@k.Id" />
+                                <input type="hidden" name="planId"
+                                       value="@Model.Id" />
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger"
+                                        style="font-size:11px;"
+                                        onclick="return confirm('Silmek istediğinize emin misiniz?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

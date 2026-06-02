@@ -1,0 +1,42 @@
+﻿@model ApartmanYonetim.Models.ViewModels.ButceViewModel
+@{
+    ViewData["Title"] = "Yeni Bütçe Planı";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-plus me-2"></i>Yeni Bütçe Planı</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card" style="max-width:480px;">
+    <form asp-action="Create" method="post">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Yıl *</label>
+                <select name="Yil" class="form-select">
+                    @for (int y = DateTime.Now.Year - 1;
+                          y <= DateTime.Now.Year + 2; y++)
+                    {
+                        <option value="@y"
+                                selected="@(y == DateTime.Now.Year)">@y</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">
+                    Açıklama (Opsiyonel)
+                </label>
+                <input name="Aciklama" class="form-control"
+                       placeholder="Bütçe planı hakkında not..." />
+            </div>
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-save me-2"></i>Plan Oluştur
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,106 @@
+﻿@model ApartmanYonetim.Models.ViewModels.VehicleViewModel
+@{
+    ViewData["Title"] = "Araç Ekle";
+}
+
+<div class="page-header">
+    <h4><i class="fas fa-plus me-2"></i>Araç Ekle</h4>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<div class="form-card">
+    <form asp-action="Create" method="post">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Plaka</label>
+                <input asp-for="Plaka" class="form-control"
+                       placeholder="34ABC123"
+                       style="text-transform:uppercase;font-weight:600;
+                letter-spacing:2px;" />
+                <span asp-validation-for="Plaka" class="text-danger"
+                      style="font-size:12px;"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Marka</label>
+                <input asp-for="Marka" class="form-control" placeholder="Toyota" />
+                <span asp-validation-for="Marka" class="text-danger"
+                      style="font-size:12px;"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Model</label>
+                <input asp-for="Model" class="form-control" placeholder="Corolla" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Renk</label>
+                <input asp-for="Renk" class="form-control" placeholder="Beyaz" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Araç Tipi</label>
+                <select asp-for="AracTipi" class="form-select">
+                    <option value="Otomobil">Otomobil</option>
+                    <option value="SUV">SUV</option>
+                    <option value="Minivan">Minivan</option>
+                    <option value="Motosiklet">Motosiklet</option>
+                    <option value="Kamyonet">Kamyonet</option>
+                    <option value="Diğer">Diğer</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:13px;">Otopark No</label>
+                <input asp-for="OtoparkNo" class="form-control"
+                       placeholder="Örn: A-12" />
+            </div>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="col-md-6">
+                    <label class="form-label" style="font-size:13px;">Daire</label>
+                    <select asp-for="ApartmentId" class="form-select">
+                        <option value="">Daire Seçiniz</option>
+                        @foreach (SelectListItem item in ViewBag.Daireler)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <div class="col-md-6">
+                <label class="form-label" style="font-size:13px;">Araç Türü</label>
+                <div class="d-flex gap-3 mt-2">
+                    <div class="form-check">
+                        <input asp-for="ZiyaretciMi" class="form-check-input"
+                               type="radio" value="false" id="sakin" checked />
+                        <label class="form-check-label" for="sakin"
+                               style="font-size:13px;">
+                            Sakin Aracı
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="ZiyaretciMi" class="form-check-input"
+                               type="radio" value="true" id="ziyaretci" />
+                        <label class="form-check-label" for="ziyaretci"
+                               style="font-size:13px;">
+                            Ziyaretçi Aracı
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" style="font-size:13px;">Açıklama</label>
+                <input asp-for="Aciklama" class="form-control"
+                       placeholder="Opsiyonel not..." />
+            </div>
+
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-auth"
+                        style="width:auto;padding:10px 32px;">
+                    <i class="fas fa-save me-2"></i>Kaydet
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
