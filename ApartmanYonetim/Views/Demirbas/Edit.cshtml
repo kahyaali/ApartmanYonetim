@@ -184,23 +184,105 @@
             });
         }
 
-        async function resimSilAsync(resimId) {
-            // Alert yerine güzel modal
+        // async function resimSilAsync(resimId) {
+        //     // Alert yerine güzel modal
+        //     const onay = await showConfirm('Bu resmi silmek istediğinize emin misiniz?');
+        //     if (!onay) return;
+
+        //     try {
+        //         const res = await fetch(`/Demirbas/ResimSilAsync/${resimId}`, {
+        //             method: 'POST'
+        //         });
+        //         const data = await res.json();
+        //         if (data.success) {
+        //             document.getElementById(`resim_${resimId}`)?.remove();
+        //             if (typeof showNotification === 'function')
+        //                 showNotification('Resim silindi.', 'success');
+        //         }
+        //     } catch(e) {
+        //         console.warn('Resim silme hatası:', e);
+        //     }
+        // }
+
+
+        //         async function resimSilAsync(resimId) {
+        //     const onay = await showConfirm('Bu resmi silmek istediğinize emin misiniz?');
+        //     if (!onay) return;
+
+        //     try {
+        //         const token = document.querySelector(
+        //             'input[name="__RequestVerificationToken"]')?.value;
+
+        //         const res = await fetch(`/Demirbas/ResimSilAsync/${resimId}`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'RequestVerificationToken': token,
+        //                 'X-Requested-With': 'XMLHttpRequest'
+        //             }
+        //         });
+
+        //         const text = await res.text();
+        //         console.log('Response status:', res.status, 'Body:', text);
+
+        //         if (!res.ok) {
+        //             showNotification(`Hata: ${res.status}`, 'danger');
+        //             return;
+        //         }
+
+        //         const data = JSON.parse(text);
+        //         if (data.success) {
+        //             document.getElementById(`resim_${resimId}`)?.remove();
+        //             showNotification('Resim silindi.', 'success');
+        //         } else {
+        //             showNotification(data.mesaj || 'Silinemedi.', 'danger');
+        //         }
+        //     } catch(e) {
+        //         console.error('Resim silme hatası:', e);
+        //         showNotification('Hata oluştu.', 'danger');
+        //     }
+        // }
+
+              
+                async function resimSilAsync(resimId) {
             const onay = await showConfirm('Bu resmi silmek istediğinize emin misiniz?');
             if (!onay) return;
 
             try {
-                const res = await fetch(`/Demirbase/ResimSilAsync/${resimId}`, {
-                    method: 'POST'
+                // .NET Antiforgery token'ını formun içinden en garanti yolla çekiyoruz
+                const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                const token = tokenInput ? tokenInput.value : '';
+
+                // İNATÇI 404'Ü BİTİREN REFAKTÖR:
+                // Parametreyi URL query string olarak (?id=4) gönderiyoruz.
+                // Böylece .NET her koşulda (id) model bağlamasını kayıpsız yapar.
+                const res = await fetch(`/Demirbas/ResimSilAsync?id=${resimId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json' // Sunucuya temiz bir istek tipi belirtiyoruz
+                    }
                 });
-                const data = await res.json();
+
+                const text = await res.text();
+                console.log('Response status:', res.status, 'Body:', text);
+
+                if (!res.ok) {
+                    showNotification(`Hata: ${res.status}`, 'danger');
+                    return;
+                }
+
+                const data = JSON.parse(text);
                 if (data.success) {
+                    // Resmi arayüzden pürüzsüzce kaldır
                     document.getElementById(`resim_${resimId}`)?.remove();
-                    if (typeof showNotification === 'function')
-                        showNotification('Resim silindi.', 'success');
+                    showNotification(data.mesaj || 'Resim silindi.', 'success');
+                } else {
+                    showNotification(data.mesaj || 'Silinemedi.', 'danger');
                 }
             } catch(e) {
-                console.warn('Resim silme hatası:', e);
+                console.error('Resim silme hatası:', e);
+                showNotification('Hata oluştu.', 'danger');
             }
         }
     </script>

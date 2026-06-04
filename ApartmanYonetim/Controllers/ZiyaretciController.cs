@@ -25,6 +25,44 @@ namespace ApartmanYonetim.Controllers
             _notificationService = notificationService;
         }
 
+        //public async Task<IActionResult> Index()
+        //{
+        //    try
+        //    {
+        //        var user = await _userManager.GetUserAsync(User);
+        //        var isAdmin = User.IsInRole("Admin");
+
+        //        var query = _context.Ziyaretciler
+        //            .Include(z => z.Apartment)
+        //                .ThenInclude(a => a!.Block)
+        //            .Include(z => z.DavetEden)
+        //            .AsQueryable();
+
+        //        if (!isAdmin)
+        //            query = query.Where(z => z.DavetEdenId == user!.Id);
+
+        //        var ziyaretciler = await query
+        //            .OrderByDescending(z => z.OlusturmaTarihi)
+        //            .ToListAsync();
+
+        //        ViewBag.Bekleyen = ziyaretciler
+        //            .Count(z => z.Durum == ZiyaretciDurum.Bekliyor);
+        //        ViewBag.Icerde = ziyaretciler
+        //            .Count(z => z.Durum == ZiyaretciDurum.Icerde);
+        //        ViewBag.BugunCikan = ziyaretciler
+        //            .Count(z => z.Durum == ZiyaretciDurum.Cikti &&
+        //                z.CikisSaati?.Date == DateTime.Today);
+
+        //        return View(ziyaretciler);
+        //    }
+        //    catch
+        //    {
+        //        TempData["Error"] = "Ziyaretçiler yüklenirken hata oluştu.";
+        //        return RedirectToAction("Index", "Home");
+        //    }
+        //}
+
+
         public async Task<IActionResult> Index()
         {
             try
@@ -32,14 +70,26 @@ namespace ApartmanYonetim.Controllers
                 var user = await _userManager.GetUserAsync(User);
                 var isAdmin = User.IsInRole("Admin");
 
-                var query = _context.Ziyaretciler
-                    .Include(z => z.Apartment)
-                        .ThenInclude(a => a!.Block)
-                    .Include(z => z.DavetEden)
-                    .AsQueryable();
+                IQueryable<Ziyaretci> query;
 
-                if (!isAdmin)
-                    query = query.Where(z => z.DavetEdenId == user!.Id);
+                if (isAdmin)
+                {
+                    // Admin tümünü görür
+                    query = _context.Ziyaretciler
+                        .Include(z => z.Apartment).ThenInclude(a => a!.Block)
+                        .Include(z => z.DavetEden)
+                        .Include(z => z.Onaylayan);
+                }
+                else
+                {
+                    // Sakin: kendi dairesine gelen TÜM ziyaretçileri görür
+                    // (kendisi eklesin ya da admin/güvenlik eklesin fark etmez)
+                    query = _context.Ziyaretciler
+                        .Include(z => z.Apartment).ThenInclude(a => a!.Block)
+                        .Include(z => z.DavetEden)
+                        .Include(z => z.Onaylayan)
+                        .Where(z => z.ApartmentId == user!.ApartmentId);
+                }
 
                 var ziyaretciler = await query
                     .OrderByDescending(z => z.OlusturmaTarihi)
@@ -61,6 +111,52 @@ namespace ApartmanYonetim.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
+
+
+        //[HttpGet]
+        //public async Task<IActionResult> Ekle()
+        //{
+        //    var user = await _userManager.GetUserAsync(User);
+        //    var isAdmin = User.IsInRole("Admin");
+
+        //    if (isAdmin)
+        //    {
+        //        // Admin tüm daireleri görebilir
+        //        var daireler = await _context.Apartments
+        //            .Include(a => a.Block)
+        //            .OrderBy(a => a.Block!.Ad)
+        //            .ThenBy(a => a.DaireNo)
+        //            .ToListAsync();
+
+        //        ViewBag.Daireler = daireler.Select(d => new
+        //        {
+        //            d.Id,
+        //            Tanim = $"{(d.Block != null ? d.Block.Ad + " — " : "")}Daire {d.DaireNo}"
+        //        }).ToList();
+
+        //        ViewBag.IsAdmin = true;
+        //    }
+        //    else
+        //    {
+        //        // Sakin kendi dairesini görür
+        //        var daire = await _context.Apartments
+        //            .Include(a => a.Block)
+        //            .FirstOrDefaultAsync(a => a.Id == user!.ApartmentId);
+
+        //        ViewBag.DaireBilgisi = daire != null
+        //            ? $"{daire.Block?.Ad} — Daire {daire.DaireNo}"
+        //            : "Daire bilgisi bulunamadı";
+        //        ViewBag.IsAdmin = false;
+        //    }
+
+        //    return View(new Ziyaretci
+        //    {
+        //        BeklenenGirisSaati = DateTime.Now.AddHours(1),
+        //        ApartmentId = user!.ApartmentId
+        //    });
+        //}
+
+
         [HttpGet]
         public async Task<IActionResult> Ekle()
         {
@@ -69,9 +165,10 @@ namespace ApartmanYonetim.Controllers
 
             if (isAdmin)
             {
-                // Admin tüm daireleri görebilir
+                // Tüm daireleri + sakin adlarını yükle
                 var daireler = await _context.Apartments
                     .Include(a => a.Block)
+                    .Include(a => a.Residents.Where(r => r.AktifMi))
                     .OrderBy(a => a.Block!.Ad)
                     .ThenBy(a => a.DaireNo)
                     .ToListAsync();
@@ -79,31 +176,33 @@ namespace ApartmanYonetim.Controllers
                 ViewBag.Daireler = daireler.Select(d => new
                 {
                     d.Id,
-                    Tanim = $"{(d.Block != null ? d.Block.Ad + " — " : "")}Daire {d.DaireNo}"
+                    Tanim = $"{(d.Block != null ? d.Block.Ad + " - " : "")}Daire {d.DaireNo}" +
+             (d.Residents.Any()
+                 ? $" ({string.Join(", ", d.Residents.Select(r => r.Ad + " " + r.Soyad))})"
+                 : " (Boş)")
                 }).ToList();
 
                 ViewBag.IsAdmin = true;
             }
             else
             {
-                // Sakin kendi dairesini görür
+                // Sakin: kendi daire bilgisini göster
                 var daire = await _context.Apartments
                     .Include(a => a.Block)
                     .FirstOrDefaultAsync(a => a.Id == user!.ApartmentId);
 
                 ViewBag.DaireBilgisi = daire != null
-                    ? $"{daire.Block?.Ad} — Daire {daire.DaireNo}"
-                    : "Daire bilgisi bulunamadı";
+                    ? $"{daire.Block?.Ad} - Daire {daire.DaireNo}"
+                    : "Daire bulunamadı";
                 ViewBag.IsAdmin = false;
             }
 
             return View(new Ziyaretci
             {
                 BeklenenGirisSaati = DateTime.Now.AddHours(1),
-                ApartmentId = user!.ApartmentId
+                ApartmentId = isAdmin ? null : user!.ApartmentId
             });
         }
-
 
         [HttpPost]
         public async Task<IActionResult> Ekle(Ziyaretci model)

@@ -81,7 +81,7 @@
                     <th>Telefon</th>
                     <th>Plaka</th>
                     <th>Ziyaret Edilen Daire</th>
-                    <th>Davet Eden</th>
+                    <th>Davet / Ekleyen</th>
                     <th>Beklenen Giriş</th>
                     <th>Gerçek Giriş</th>
                     <th>Çıkış</th>
@@ -140,9 +140,27 @@
                                 <span style="color:#a0aec0;">—</span>
                             }
                         </td>
-                        <td style="font-size:12px;">
+                        @* <td style="font-size:12px;">
                             @z.DavetEden?.Ad @z.DavetEden?.Soyad
+                        </td> *@
+
+                        <td style="font-size:12px;">
+                            @if (z.DavetEden != null)
+                            {
+                                <div>@z.DavetEden.Ad @z.DavetEden.Soyad</div>
+                                @if (z.Onaylayan != null)
+                                {
+                                    <div style="font-size:11px;color:#27ae60;">
+                                        <i class="fas fa-check me-1"></i>@z.Onaylayan.Ad @z.Onaylayan.Soyad
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <span style="color:#a0aec0;">—</span>
+                            }
                         </td>
+
                         <td>
                             @z.BeklenenGirisSaati.ToString("dd.MM HH:mm")
                         </td>

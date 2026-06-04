@@ -247,7 +247,9 @@ namespace ApartmanYonetim.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ResimSilAsync(int id)
+        [ValidateAntiForgeryToken]
+        [Route("Demirbas/ResimSilAsync")]
+        public async Task<IActionResult> ResimSilAsync([FromQuery] int id)
         {
             try
             {
